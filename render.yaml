@@ -30,8 +30,7 @@ services:
         value: gemini-3.7-flash
       - key: CORS_ALLOWED_ORIGINS
         sync: false # https://your-frontend.onrender.com
-    buildCommand: ""
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    dockerCommand: gunicorn config.wsgi:application --bind 0.0.0.0:8000
 
   - type: web
     name: projectflow-web
@@ -50,6 +49,7 @@ services:
     name: projectflow-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
 databases:
   - name: projectflow-pg
