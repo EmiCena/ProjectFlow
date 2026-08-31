@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root {
+  --background: 248 100% 98%; /* #F8FAFC */
+  --foreground: 224 76% 25%; /* #1E3A8A */
+  --border: 214 100% 93%; /* #DBEAFE */
+  --primary: 221 83% 40%; /* #1E40AF */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 91% 60%; /* #3B82F6 */
+  --accent: 32 95% 44%; /* #D97706 */
+  --muted: 220 33% 94%; /* #E9EEF6 */
+  --destructive: 0 84% 51%; /* #DC2626 */
+  --ring: 221 83% 40%;
+}
+* { border-color: hsl(var(--border)); }
+body { font-family: 'Fira Sans', Inter, system-ui, sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+h1,h2,h3 { font-family: 'Fira Sans', sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+code, pre { font-family: 'Fira Code', monospace; }
+:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

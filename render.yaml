@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: projectflow-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    healthCheckPath: /api/health/
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: False
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projectflow-pg
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: projectflow-redis
+          type: redis
+          property: connectionString
+      - key: MONGO_URI
+        sync: false # Set in Render dashboard -> MongoDB Atlas URI
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.7-flash
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # https://your-frontend.onrender.com
+    buildCommand: ""
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+
+  - type: web
+    name: projectflow-web
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # https://projectflow-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: redis
+    name: projectflow-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  - name: projectflow-pg
+    plan: starter
+    databaseName: projectflow
+    user: projectflow

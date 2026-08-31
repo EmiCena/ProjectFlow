@@ -1,0 +1,8 @@
+{
+  "nav": { "dashboard": "Panel", "clients": "Clientes", "projects": "Proyectos", "invoices": "Facturas", "team": "Equipo", "settings": "Ajustes", "logout": "Salir" },
+  "auth": { "login": "Iniciar sesión", "register": "Registrarse", "email": "Correo", "password": "Contraseña", "username": "Usuario", "noAccount": "¿Sin cuenta?", "hasAccount": "¿Ya tienes cuenta?" },
+  "dashboard": { "title": "Panel", "activeProjects": "Proyectos Activos", "completedProjects": "Completados", "revenue": "Ingresos Mensuales", "outstanding": "Pendiente de cobro" },
+  "kanban": { "backlog": "Backlog", "todo": "Por Hacer", "in_progress": "En Progreso", "review": "Revisión", "done": "Hecho" },
+  "ai": { "planner": "Planificador IA", "briefPlaceholder": "Pega el brief del cliente aquí...", "generate": "Generar Plan", "createProject": "Crear Proyecto" },
+  "common": { "save": "Guardar", "cancel": "Cancelar", "create": "Crear", "search": "Buscar", "loading": "Cargando..." }
+}
