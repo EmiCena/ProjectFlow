@@ -2,8 +2,9 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
-from .models import Task, TaskComment
-from .serializers import TaskSerializer, TaskCommentSerializer
+from django.db.models import F
+from .models import Task, TaskComment, TimeEntry
+from .serializers import TaskSerializer, TaskCommentSerializer, TimeEntrySerializer
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
@@ -43,3 +44,28 @@ class TaskViewSet(viewsets.ModelViewSet):
         ser.is_valid(raise_exception=True)
         ser.save(author=request.user)
         return Response(ser.data, status=201)
+
+    @action(detail=True, methods=['get','post'])
+    def time_entries(self, request, pk=None):
+        task = self.get_object()
+        if request.method == 'GET':
+            return Response(TimeEntrySerializer(task.time_entries.all(), many=True).data)
+        # POST log time
+        try:
+            hours = float(request.data.get('hours', 0))
+        except: hours = 0
+        if hours <= 0 or hours > 24:
+            return Response({"detail": "hours must be 0.1-24"}, status=400)
+        entry = TimeEntry.objects.create(
+            task=task, project=task.project, workspace=request.user.active_workspace,
+            user=request.user, hours=hours, description=request.data.get('description','')[:300]
+        )
+        # atomic increment actual_hours
+        Task.objects.filter(pk=task.id).update(actual_hours=F('actual_hours') + hours)
+        task.refresh_from_db()
+        # log activity
+        try:
+            from apps.activity.mongo import log_activity
+            log_activity(workspace_id=request.user.active_workspace_id, user_id=request.user.id, event='time_logged', entity='task', entity_id=task.id, metadata={'hours': float(hours)})
+        except Exception: pass
+        return Response(TimeEntrySerializer(entry).data, status=201)

@@ -1,8 +1,10 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { useThemeStore } from "@/store/theme"
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const nav = useNavigate()
+  const { theme, toggle } = useThemeStore()
   const logout = () => { localStorage.clear(); nav("/login") }
   const linkBase = "flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 min-h-[44px]"
   const active = "bg-primary text-white shadow-sm"
@@ -48,6 +50,13 @@ export default function Layout() {
           </div>
         </nav>
         <div className="space-y-2 pt-4 border-t border-white/10">
+          <button onClick={toggle} aria-pressed={theme==="dark"} aria-label="Toggle dark mode" className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium bg-white/5 hover:bg-white/10 text-slate-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20">
+            {theme==="dark" ? (
+              <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Light mode</>
+            ) : (
+              <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark mode</>
+            )}
+          </button>
           <label htmlFor="lang" className="sr-only">Language</label>
           <select id="lang" value={i18n.language} onChange={e=>i18n.changeLanguage(e.target.value)} className="w-full bg-slate-800 border border-white/10 rounded-md px-3 py-2.5 text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-white/20">
             <option value="es">Español</option>

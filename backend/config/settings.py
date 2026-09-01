@@ -67,12 +67,18 @@ DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
 MONGO_URI = config('MONGO_URI', default='mongodb://localhost:27017/projectflow')
 MONGO_DB_NAME = config('MONGO_DB_NAME', default='projectflow')
 
-# Redis / Celery
+# Redis / Celery + Cache for throttling
 REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+    }
+}
 
 # Auth
 AUTH_USER_MODEL = 'accounts.User'
@@ -83,8 +89,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.UserRateThrottle','rest_framework.throttling.AnonRateThrottle'],
-    'DEFAULT_THROTTLE_RATES': {'user': '1000/hour', 'anon': '100/hour', 'ai': '20/hour'},
+    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.UserRateThrottle','rest_framework.throttling.AnonRateThrottle','rest_framework.throttling.ScopedRateThrottle'],
+    'DEFAULT_THROTTLE_RATES': {'user': '1000/hour', 'user_burst': '60/minute', 'anon': '100/hour', 'anon_burst': '20/minute', 'ai': '20/hour', 'ai_burst': '5/minute'},
     'EXCEPTION_HANDLER': 'apps.activity.exceptions.custom_exception_handler',
 }
 SIMPLE_JWT = {
@@ -95,15 +101,12 @@ SIMPLE_JWT = {
 
 # CORS - prod must include frontend URL (Render + Railway)
 _cors_default = 'http://localhost:5173,http://localhost:3000,https://projectflow-web-production-981d.up.railway.app,https://projectflow-web-4ccs.onrender.com,https://projectflow-web.onrender.com'
-CORS_ALLOWED_ORIGINS = [
-    "https://projectflow-web-4ccs.onrender.com",
-]
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default=_cors_default, cast=Csv())
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ['authorization','content-type','accept','origin','x-csrftoken']
-CSRF_TRUSTED_ORIGINS = [
-    "https://projectflow-web-4ccs.onrender.com",
-]
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='https://*.up.railway.app,https://*.railway.app,https://*.onrender.com', cast=Csv())
 # Fallback regex for *.onrender.com and *.up.railway.app
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://.*\.up\.railway\.app$", r"^https://.*\.onrender\.com$"]
 
 
 # Security headers

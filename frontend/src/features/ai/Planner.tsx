@@ -13,12 +13,23 @@ export default function Planner() {
   const [creating, setCreating] = useState(false)
   const [result, setResult] = useState<any>(null)
 
+  const [cooldown, setCooldown] = useState(0)
   const generate = async () => {
+    if (cooldown > 0) return
     setLoading(true)
     try {
       const { data } = await api.post("/ai/plan/", { brief })
       setPlan(data)
-    } catch(e:any){ alert(e.response?.data?.detail || e.message) }
+    } catch(e:any){
+      const retry = e.response?.headers?.['retry-after'] || e.response?.data?.retry_after
+      if (e.response?.status === 429 && retry) {
+        const sec = Number(retry)
+        setCooldown(sec)
+        const id = setInterval(() => setCooldown(s => { if (s <= 1) clearInterval(id); return s - 1 }), 1000)
+      } else {
+        alert(e.response?.data?.detail || e.message)
+      }
+    }
     setLoading(false)
   }
   const confirm = async () => {
@@ -38,7 +49,8 @@ export default function Planner() {
       <h1 className="text-2xl font-bold">{t('ai.planner')}</h1>
       <div className="bg-white p-4 rounded-lg shadow space-y-3">
         <textarea value={brief} onChange={e=>setBrief(e.target.value)} rows={4} placeholder={t('ai.briefPlaceholder')} className="w-full border rounded p-2 text-sm" />
-        <Button onClick={generate} disabled={loading || brief.length<20}>{loading ? "Generating..." : t('ai.generate')}</Button>
+        <Button onClick={generate} disabled={loading || brief.length<20 || cooldown > 0}>{loading ? "Generating..." : cooldown > 0 ? `Retry in ${cooldown}s` : t('ai.generate')}</Button>
+        {cooldown > 0 && <p className="text-xs text-amber-600">Rate limited - wait {cooldown}s</p>}
       </div>
 
       {plan && (

@@ -1,3 +1,4 @@
+import csv
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -12,6 +13,18 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         return Invoice.objects.filter(workspace=self.request.user.active_workspace).prefetch_related('items','payments')
     def perform_create(self, serializer):
         serializer.save(workspace=self.request.user.active_workspace)
+    @action(detail=False, methods=['get'], url_path='export', url_name='export')
+    def export(self, request):
+        qs = self.filter_queryset(self.get_queryset()).order_by('created_at')
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="invoices.csv"'
+        response.write('\ufeff')
+        writer = csv.writer(response)
+        writer.writerow(['ID','Number','Client','Project','Status','Subtotal','Tax Rate','Total','Due Date','Created At'])
+        for obj in qs.iterator():
+            writer.writerow([obj.id, obj.number, obj.client.company_name if obj.client else '', obj.project.title if obj.project else '', obj.status, obj.subtotal, obj.tax_rate, obj.total, obj.due_date or '', obj.created_at.isoformat()])
+        return response
+
     @action(detail=True, methods=['get'])
     def pdf(self, request, pk=None):
         inv = self.get_object()

@@ -24,9 +24,19 @@ export default function Invoices() {
   })
   const list = data?.results ?? data ?? []
   const clientList = clients?.results ?? clients ?? []
+  const handleExport = async () => {
+    const res = await api.get("/invoices/export/", { responseType: "blob" })
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: "text/csv" }))
+    const a = document.createElement("a"); a.href = url
+    a.download = res.headers["content-disposition"]?.match(/filename="?([^"]+)"?/)?.[1] || "invoices.csv"
+    document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url)
+  }
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Invoices</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Invoices</h1>
+        <Button variant="outline" size="sm" onClick={handleExport}>Export CSV</Button>
+      </div>
 
       <div className="bg-white p-4 rounded-lg shadow space-y-3">
         <h3 className="font-semibold">New Invoice</h3>

@@ -4,5 +4,5 @@
   "dashboard": { "title": "Dashboard", "activeProjects": "Active Projects", "completedProjects": "Completed", "revenue": "Monthly Revenue", "outstanding": "Outstanding" },
   "kanban": { "backlog": "Backlog", "todo": "To Do", "in_progress": "In Progress", "review": "Review", "done": "Done" },
   "ai": { "planner": "AI Project Planner", "briefPlaceholder": "Paste client brief here...", "generate": "Generate Plan", "createProject": "Create Project" },
-  "common": { "save": "Save", "cancel": "Cancel", "create": "Create", "search": "Search", "loading": "Loading..." }
+  "common": { "save": "Save", "cancel": "Cancel", "create": "Create", "search": "Search", "loading": "Loading...", "export": "Export CSV", "rateLimited": "Too many requests. Retry in {{s}}s" }
 }

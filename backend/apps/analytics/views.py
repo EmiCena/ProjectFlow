@@ -22,6 +22,9 @@ class SummaryView(APIView):
         tasks_total = Task.objects.filter(workspace=ws).count()
         completion_rate = round(tasks_done / tasks_total * 100, 1) if tasks_total else 0
         upcoming = list(Task.objects.filter(workspace=ws, due_date__isnull=False).order_by('due_date').values('id','title','due_date','status')[:5])
+        hours = Task.objects.filter(workspace=ws).aggregate(est=Sum('estimated_hours'), act=Sum('actual_hours'))
+        total_est = float(hours['est'] or 0)
+        total_act = float(hours['act'] or 0)
         return Response({
             "active_projects": active,
             "completed_projects": completed,
@@ -30,4 +33,7 @@ class SummaryView(APIView):
             "status_distribution": status_dist,
             "task_completion_rate": completion_rate,
             "upcoming_deadlines": upcoming,
+            "total_estimated_hours": round(total_est, 1),
+            "total_actual_hours": round(total_act, 1),
+            "hours_variance": round(total_act - total_est, 1),
         })

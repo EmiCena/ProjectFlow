@@ -18,29 +18,47 @@ const COLS = [
 function TaskCard({ task, onClick }:any) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id })
   const style = { transform: CSS.Transform.toString(transform), transition }
+  const pct = task.estimated_hours > 0 ? Math.min(100, Math.round((Number(task.actual_hours)/Number(task.estimated_hours))*100)) : 0
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={onClick} className="bg-white p-3 rounded shadow-sm border text-sm cursor-grab hover:shadow">
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={onClick} className="bg-card dark:bg-slate-900 p-3 rounded shadow-sm border text-sm cursor-grab hover:shadow">
       <div className="font-medium">{task.title}</div>
-      <div className="text-xs text-slate-500 mt-1 line-clamp-2">{task.description}</div>
-      <div className="flex gap-1 mt-2">
-        <span className={`text-xs px-1.5 py-0.5 rounded ${task.priority==='urgent'?'bg-red-100 text-red-700': task.priority==='high'?'bg-orange-100':''} bg-slate-100`}>{task.priority}</span>
-        {task.assignee && <span className="text-xs bg-indigo-50 px-1 rounded">#{task.assignee}</span>}
+      <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</div>
+      <div className="flex gap-1 mt-2 flex-wrap">
+        <span className={`text-xs px-1.5 py-0.5 rounded ${task.priority==='urgent'?'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': task.priority==='high'?'bg-orange-100 dark:bg-orange-900/30':''} bg-slate-100 dark:bg-slate-800`}>{task.priority}</span>
+        <span className="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{Number(task.estimated_hours)}h est</span>
+        <span className={`text-xs px-1.5 py-0.5 rounded ${Number(task.actual_hours)>Number(task.estimated_hours)?'bg-red-100 text-red-700 dark:bg-red-900/30': 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'}`}>{Number(task.actual_hours)}h act</span>
+        {task.assignee && <span className="text-xs bg-indigo-50 dark:bg-indigo-900/30 px-1 rounded">#{task.assignee}</span>}
       </div>
+      {task.estimated_hours>0 && <div className="mt-2 h-1 bg-slate-100 dark:bg-slate-800 rounded"><div className={`h-1 rounded ${pct>100?'bg-red-500': pct>80?'bg-amber-500':'bg-emerald-500'}`} style={{width:`${Math.min(100,pct)}%`}} /></div>}
     </div>
   )
 }
 function Column({ id, label, tasks, onAdd, onTaskClick }:any) {
   const { setNodeRef } = useDroppable({ id })
   const sortableIds = tasks.map((t:any)=>t.id)
+  const est = tasks.reduce((s:any,t:any)=>s+Number(t.estimated_hours||0),0)
+  const act = tasks.reduce((s:any,t:any)=>s+Number(t.actual_hours||0),0)
   return (
-    <div ref={setNodeRef} className="bg-slate-100 rounded-lg p-3 min-h-[400px] flex flex-col">
-      <h3 className="font-semibold text-sm mb-2 flex justify-between">{label}<span className="bg-white px-1.5 rounded text-xs">{tasks.length}</span></h3>
+    <div ref={setNodeRef} className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-3 min-h-[400px] flex flex-col">
+      <h3 className="font-semibold text-sm mb-2 flex justify-between">{label}<span className="bg-white dark:bg-slate-900 px-1.5 rounded text-xs">{tasks.length} · {est}h/{act}h</span></h3>
       <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-2 flex-1">
           {tasks.map((t:any)=><TaskCard key={t.id} task={t} onClick={()=>onTaskClick(t)} />)}
         </div>
       </SortableContext>
       <button onClick={onAdd} className="mt-2 text-xs border border-dashed rounded py-1 bg-white hover:bg-slate-50">+ Add</button>
+    </div>
+  )
+}
+
+function TimeLogForm({ taskId, logTime, onLogged }: any) {
+  const [hours, setHours] = useState("")
+  const [desc, setDesc] = useState("")
+  return (
+    <div className="flex gap-2 mt-2">
+      <input type="number" step="0.5" min="0.1" max="24" value={hours} onChange={e=>setHours(e.target.value)} placeholder="Hours" className="w-20 border rounded px-2 py-1 text-sm bg-background" />
+      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Note" className="flex-1 border rounded px-2 py-1 text-sm bg-background" />
+      <Button size="sm" onClick={() => { const h=Number(hours); if(h>0){ logTime.mutate({taskId, hours:h, description:desc}); setHours(""); setDesc(""); onLogged() }}}>Log</Button>
     </div>
   )
 }
@@ -66,6 +84,10 @@ export default function Board() {
   })
   const addComment = useMutation({
     mutationFn: async ({taskId, body}:any) => (await api.post(`/tasks/${taskId}/comments/`, {body})).data,
+    onSuccess: () => qc.invalidateQueries({queryKey:["tasks", id]})
+  })
+  const logTime = useMutation({
+    mutationFn: async ({taskId, hours, description}:any) => (await api.post(`/tasks/${taskId}/time_entries/`, {hours, description})).data,
     onSuccess: () => qc.invalidateQueries({queryKey:["tasks", id]})
   })
 
@@ -112,18 +134,32 @@ export default function Board() {
       </DndContext>
 
       {selected && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4" onClick={()=>setSelected(null)}>
-          <div className="bg-white rounded-lg p-4 w-full max-w-md space-y-3" onClick={e=>e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50" onClick={()=>setSelected(null)}>
+          <div className="bg-card dark:bg-slate-900 rounded-lg p-4 w-full max-w-md space-y-3 max-h-[90vh] overflow-auto" onClick={e=>e.stopPropagation()}>
             <h3 className="font-semibold">{selected.title}</h3>
-            <p className="text-sm text-slate-600">{selected.description || "No description"}</p>
-            <div className="text-xs flex gap-2"><span className="bg-slate-100 px-2 py-1 rounded">{selected.status}</span><span className="bg-slate-100 px-2 py-1 rounded">{selected.priority}</span></div>
+            <p className="text-sm text-muted-foreground">{selected.description || "No description"}</p>
+            <div className="text-xs flex gap-2 flex-wrap">
+              <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{selected.status}</span>
+              <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{selected.priority}</span>
+              <span className="bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">Est {Number(selected.estimated_hours)}h</span>
+              <span className="bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">Act {Number(selected.actual_hours)}h</span>
+            </div>
+            <div className="border-t pt-2">
+              <h4 className="text-sm font-semibold">Log Time</h4>
+              <TimeLogForm taskId={selected.id} onLogged={() => {}} logTime={logTime} />
+              {(selected.time_entries?.length > 0) && (
+                <div className="mt-2 space-y-1">
+                  {selected.time_entries.map((te:any)=><div key={te.id} className="text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded flex justify-between"><span>{te.username}: {te.hours}h — {te.description || "no note"}</span><span className="text-muted-foreground">{te.date}</span></div>)}
+                </div>
+              )}
+            </div>
             <div className="border-t pt-2">
               <h4 className="text-sm font-semibold">Comments</h4>
               <div className="space-y-1 max-h-32 overflow-auto">
-                {(selected.comments ?? []).map((c:any)=><div key={c.id} className="text-sm bg-slate-50 p-2 rounded"><b>{c.author_username || c.author}</b>: {c.body}</div>)}
+                {(selected.comments ?? []).map((c:any)=><div key={c.id} className="text-sm bg-slate-50 dark:bg-slate-800 p-2 rounded"><b>{c.author_username || c.author}</b>: {c.body}</div>)}
               </div>
               <div className="flex gap-2 mt-2">
-                <input value={comment} onChange={e=>setComment(e.target.value)} placeholder="Add comment" className="flex-1 border rounded px-2 py-1 text-sm" />
+                <input value={comment} onChange={e=>setComment(e.target.value)} placeholder="Add comment" className="flex-1 border rounded px-2 py-1 text-sm bg-background" />
                 <Button onClick={()=>{ if(comment.trim()){ addComment.mutate({taskId:selected.id, body:comment}); setComment("") }}}>Send</Button>
               </div>
             </div>

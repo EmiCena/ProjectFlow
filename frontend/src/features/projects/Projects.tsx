@@ -17,9 +17,19 @@ export default function Projects() {
   })
   const list = data?.results ?? data ?? []
   const clientList = clients?.results ?? clients ?? []
+  const handleExport = async () => {
+    const res = await api.get("/projects/export/", { responseType: "blob" })
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: "text/csv" }))
+    const a = document.createElement("a"); a.href = url
+    a.download = res.headers["content-disposition"]?.match(/filename="?([^"]+)"?/)?.[1] || "projects.csv"
+    document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url)
+  }
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">{t('nav.projects')}</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">{t('nav.projects')}</h1>
+        <Button variant="outline" size="sm" onClick={handleExport}>{t('common.export')}</Button>
+      </div>
       <div className="bg-white p-4 rounded-lg shadow space-y-3">
         <h3 className="font-semibold">New Project</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">

@@ -21,6 +21,18 @@ class Task(models.Model):
         ordering = ['position','created_at']
     def __str__(self): return self.title
 
+class TimeEntry(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='time_entries')
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE, related_name='time_entries')
+    workspace = models.ForeignKey('workspaces.Workspace', on_delete=models.CASCADE, related_name='time_entries')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='time_entries')
+    hours = models.DecimalField(max_digits=5, decimal_places=2)
+    description = models.TextField(blank=True)
+    date = models.DateField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-created_at']
+
 class TaskComment(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

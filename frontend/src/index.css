@@ -13,6 +13,20 @@
   --muted: 220 33% 94%; /* #E9EEF6 */
   --destructive: 0 84% 51%; /* #DC2626 */
   --ring: 221 83% 40%;
+  color-scheme: light;
+}
+.dark {
+  --background: 224 71% 4%; /* #0B1220 slate-950 */
+  --foreground: 210 20% 98%; /* #F8FAFC */
+  --border: 215 28% 17%; /* #1E293B slate-800 */
+  --primary: 217 91% 60%; /* #3B82F6 bright on dark */
+  --primary-foreground: 224 76% 25%;
+  --secondary: 217 91% 60%;
+  --accent: 32 95% 44%;
+  --muted: 215 28% 17%;
+  --destructive: 0 62% 30%;
+  --ring: 217 91% 60%;
+  color-scheme: dark;
 }
 * { border-color: hsl(var(--border)); }
 body { font-family: 'Fira Sans', Inter, system-ui, sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased; }

@@ -4,5 +4,5 @@
   "dashboard": { "title": "Panel", "activeProjects": "Proyectos Activos", "completedProjects": "Completados", "revenue": "Ingresos Mensuales", "outstanding": "Pendiente de cobro" },
   "kanban": { "backlog": "Backlog", "todo": "Por Hacer", "in_progress": "En Progreso", "review": "Revisión", "done": "Hecho" },
   "ai": { "planner": "Planificador IA", "briefPlaceholder": "Pega el brief del cliente aquí...", "generate": "Generar Plan", "createProject": "Crear Proyecto" },
-  "common": { "save": "Guardar", "cancel": "Cancelar", "create": "Crear", "search": "Buscar", "loading": "Cargando..." }
+  "common": { "save": "Guardar", "cancel": "Cancelar", "create": "Crear", "search": "Buscar", "loading": "Cargando...", "export": "Exportar CSV", "rateLimited": "Demasiadas peticiones. Reintenta en {{s}}s" }
 }

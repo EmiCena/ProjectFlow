@@ -6,7 +6,7 @@ export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttrib
   ({ className, variant='default', size='default', loading, children, disabled, ...props }, ref) => {
     const variants: Record<Variant,string> = {
       default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm focus-visible:ring-2 focus-visible:ring-ring",
-      outline: "border border-border bg-white hover:bg-muted text-foreground",
+      outline: "border border-border bg-card dark:bg-slate-900 hover:bg-muted dark:hover:bg-slate-800 text-foreground",
       ghost: "hover:bg-muted text-foreground",
       destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90"
     }

@@ -7,11 +7,21 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+import { toast } from "sonner"
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
     const status = error.response?.status
+    // 429 throttled
+    if (status === 429) {
+      const retryAfter = error.response.headers?.['retry-after'] || error.response.data?.retry_after || 60
+      const detail = error.response.data?.detail || "Too many requests"
+      toast.error(`${detail} - retry in ${retryAfter}s`, { duration: 4000 })
+      // emit for UI countdown
+      window.dispatchEvent(new CustomEvent('rate-limited', { detail: { retryAfter: Number(retryAfter), path: original?.url } }))
+    }
     // 401 -> try refresh, else redirect with expired flag
     if (status === 401 && !original._retry) {
       original._retry = true
