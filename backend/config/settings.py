@@ -8,7 +8,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='dev-secret-key-change-me')
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+# Railway injects RAILWAY_PUBLIC_DOMAIN / PORT ; allow .railway.app in prod
+_default_hosts = 'localhost,127.0.0.1,.up.railway.app,.railway.app'
+if not DEBUG:
+    _default_hosts += ',projectflow-api-production.up.railway.app,projectflow-web-production-981d.up.railway.app'
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default=_default_hosts, cast=Csv())
+# Trust Railway proxy for https
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='https://*.up.railway.app,https://*.railway.app', cast=Csv())
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -52,8 +59,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 TEMPLATES = [{ 'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIRS': [], 'APP_DIRS': True, 'OPTIONS': { 'context_processors': ['django.template.context_processors.debug','django.template.context_processors.request','django.contrib.auth.context_processors.auth','django.contrib.messages.context_processors.messages']}}]
 
-# Database - PostgreSQL
-DATABASE_URL = config('DATABASE_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+# Database - PostgreSQL (Railway may provide DATABASE_PUBLIC_URL or POSTGRES_URL)
+DATABASE_URL = config('DATABASE_URL', default=config('DATABASE_PUBLIC_URL', default=config('POSTGRES_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")))
 DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
 
 # MongoDB
@@ -86,10 +93,13 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
 }
 
-# CORS
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173', cast=Csv())
+# CORS - Railway prod must include frontend URL
+_cors_default = 'http://localhost:5173,http://localhost:3000,https://projectflow-web-production-981d.up.railway.app'
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default=_cors_default, cast=Csv())
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ['authorization','content-type','accept','origin','x-csrftoken']
+# Fallback: if env still missing railway origin, allow via regex (safe for this portfolio app)
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://.*\.up\.railway\.app$"]
 
 # Security headers
 SECURE_BROWSER_XSS_FILTER = True

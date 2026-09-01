@@ -10,5 +10,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+# Railway/Heroku compatible: migrate + collectstatic on boot
+RUN chmod +x manage.py
 EXPOSE 8000
-CMD sh -c "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:\${PORT:-8000}"
+CMD sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput || true && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 60"
