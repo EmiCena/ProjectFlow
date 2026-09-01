@@ -22,31 +22,31 @@ export default function ProjectDetail() {
       <div className="flex justify-between">
         <div>
           <h1 className="text-2xl font-bold">{project.title}</h1>
-          <p className="text-sm text-slate-500">{project.description}</p>
-          <div className="mt-2 flex gap-2 text-xs"><span className="bg-slate-100 px-2 py-1 rounded">{project.status}</span><span className="bg-indigo-50 px-2 py-1 rounded">${project.budget}</span></div>
+          <p className="text-sm text-muted-foreground dark:text-slate-400">{project.description}</p>
+          <div className="mt-2 flex gap-2 text-xs"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{project.status}</span><span className="bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">${project.budget}</span></div>
         </div>
         <Link to={`/projects/${id}/board`} className="bg-indigo-600 text-white px-4 py-2 rounded text-sm h-fit">Open Board</Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
           <h3 className="font-semibold mb-2">Milestones</h3>
           <div className="flex gap-2 mb-3">
-            <input placeholder="Title" value={milestone.title} onChange={e=>setMilestone({...milestone, title:e.target.value})} className="border rounded px-2 py-1 text-sm flex-1" />
-            <input type="date" value={milestone.due_date} onChange={e=>setMilestone({...milestone, due_date:e.target.value})} className="border rounded px-2 py-1 text-sm" />
+            <input placeholder="Title" value={milestone.title} onChange={e=>setMilestone({...milestone, title:e.target.value})} className="border border-border rounded px-2 py-1 text-sm flex-1 bg-background dark:bg-slate-800 text-foreground" />
+            <input type="date" value={milestone.due_date} onChange={e=>setMilestone({...milestone, due_date:e.target.value})} className="border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
             <Button onClick={()=>addMilestone.mutate({title: milestone.title, due_date: milestone.due_date || null})} disabled={!milestone.title}>Add</Button>
           </div>
-          <ul className="divide-y">
-            {(project.milestones ?? []).map((m:any)=><li key={m.id} className="py-2 flex justify-between text-sm"><span>{m.title}</span><span className="text-slate-400">{m.due_date || ""} {m.completed ? "✓" : ""}</span></li>)}
-            {(!project.milestones || project.milestones.length===0) && <li className="text-sm text-slate-400 py-2">No milestones</li>}
+          <ul className="divide-y divide-border">
+            {(project.milestones ?? []).map((m:any)=><li key={m.id} className="py-2 flex justify-between text-sm border-border"><span>{m.title}</span><span className="text-muted-foreground dark:text-slate-400">{m.due_date || ""} {m.completed ? "✓" : ""}</span></li>)}
+            {(!project.milestones || project.milestones.length===0) && <li className="text-sm text-muted-foreground dark:text-slate-400 py-2">No milestones</li>}
           </ul>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
           <h3 className="font-semibold mb-2">Tasks ({taskList.length})</h3>
-          <ul className="divide-y max-h-64 overflow-auto">
-            {taskList.map((t:any)=><li key={t.id} className="py-2 text-sm flex justify-between"><span>{t.title} <span className="text-xs bg-slate-100 px-1 rounded ml-1">{t.status}</span></span><span className="text-xs text-slate-400">{t.priority}</span></li>)}
-            {taskList.length===0 && <li className="text-sm text-slate-400 py-2">No tasks yet</li>}
+          <ul className="divide-y divide-border max-h-64 overflow-auto">
+            {taskList.map((t:any)=><li key={t.id} className="py-2 text-sm flex justify-between"><span>{t.title} <span className="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded ml-1">{t.status}</span></span><span className="text-xs text-muted-foreground dark:text-slate-400">{t.priority}</span></li>)}
+            {taskList.length===0 && <li className="text-sm text-muted-foreground dark:text-slate-400 py-2">No tasks yet</li>}
           </ul>
         </div>
       </div>

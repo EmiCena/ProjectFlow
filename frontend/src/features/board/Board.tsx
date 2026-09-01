@@ -20,9 +20,9 @@ function TaskCard({ task, onClick }:any) {
   const style = { transform: CSS.Transform.toString(transform), transition }
   const pct = task.estimated_hours > 0 ? Math.min(100, Math.round((Number(task.actual_hours)/Number(task.estimated_hours))*100)) : 0
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={onClick} className="bg-card dark:bg-slate-900 p-3 rounded shadow-sm border text-sm cursor-grab hover:shadow">
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={onClick} className="bg-card dark:bg-slate-900 p-3 rounded shadow-sm border border-border text-sm cursor-grab hover:shadow">
       <div className="font-medium">{task.title}</div>
-      <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</div>
+      <div className="text-xs text-muted-foreground dark:text-slate-400 mt-1 line-clamp-2">{task.description}</div>
       <div className="flex gap-1 mt-2 flex-wrap">
         <span className={`text-xs px-1.5 py-0.5 rounded ${task.priority==='urgent'?'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': task.priority==='high'?'bg-orange-100 dark:bg-orange-900/30':''} bg-slate-100 dark:bg-slate-800`}>{task.priority}</span>
         <span className="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{Number(task.estimated_hours)}h est</span>
@@ -40,13 +40,13 @@ function Column({ id, label, tasks, onAdd, onTaskClick }:any) {
   const act = tasks.reduce((s:any,t:any)=>s+Number(t.actual_hours||0),0)
   return (
     <div ref={setNodeRef} className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-3 min-h-[400px] flex flex-col">
-      <h3 className="font-semibold text-sm mb-2 flex justify-between">{label}<span className="bg-white dark:bg-slate-900 px-1.5 rounded text-xs">{tasks.length} · {est}h/{act}h</span></h3>
+      <h3 className="font-semibold text-sm mb-2 flex justify-between">{label}<span className="bg-card dark:bg-slate-900 px-1.5 rounded text-xs border border-border">{tasks.length} · {est}h/{act}h</span></h3>
       <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-2 flex-1">
           {tasks.map((t:any)=><TaskCard key={t.id} task={t} onClick={()=>onTaskClick(t)} />)}
         </div>
       </SortableContext>
-      <button onClick={onAdd} className="mt-2 text-xs border border-dashed rounded py-1 bg-white hover:bg-slate-50">+ Add</button>
+      <button onClick={onAdd} className="mt-2 text-xs border border-border border-dashed rounded py-1 bg-card dark:bg-slate-900 hover:bg-muted dark:hover:bg-slate-800 text-foreground">+ Add</button>
     </div>
   )
 }
@@ -56,8 +56,8 @@ function TimeLogForm({ taskId, logTime, onLogged }: any) {
   const [desc, setDesc] = useState("")
   return (
     <div className="flex gap-2 mt-2">
-      <input type="number" step="0.5" min="0.1" max="24" value={hours} onChange={e=>setHours(e.target.value)} placeholder="Hours" className="w-20 border rounded px-2 py-1 text-sm bg-background" />
-      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Note" className="flex-1 border rounded px-2 py-1 text-sm bg-background" />
+      <input type="number" step="0.5" min="0.1" max="24" value={hours} onChange={e=>setHours(e.target.value)} placeholder="Hours" className="w-20 border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
+      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Note" className="flex-1 border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
       <Button size="sm" onClick={() => { const h=Number(hours); if(h>0){ logTime.mutate({taskId, hours:h, description:desc}); setHours(""); setDesc(""); onLogged() }}}>Log</Button>
     </div>
   )
@@ -122,7 +122,7 @@ export default function Board() {
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold">Board — Project {id}</h1>
-        <span className="text-sm text-slate-500">{tasks.length} tasks</span>
+        <span className="text-sm text-muted-foreground dark:text-slate-400">{tasks.length} tasks</span>
       </div>
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -135,31 +135,31 @@ export default function Board() {
 
       {selected && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50" onClick={()=>setSelected(null)}>
-          <div className="bg-card dark:bg-slate-900 rounded-lg p-4 w-full max-w-md space-y-3 max-h-[90vh] overflow-auto" onClick={e=>e.stopPropagation()}>
+          <div className="bg-card dark:bg-slate-900 rounded-lg p-4 w-full max-w-md space-y-3 max-h-[90vh] overflow-auto border border-border" onClick={e=>e.stopPropagation()}>
             <h3 className="font-semibold">{selected.title}</h3>
-            <p className="text-sm text-muted-foreground">{selected.description || "No description"}</p>
+            <p className="text-sm text-muted-foreground dark:text-slate-400">{selected.description || "No description"}</p>
             <div className="text-xs flex gap-2 flex-wrap">
               <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{selected.status}</span>
               <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{selected.priority}</span>
               <span className="bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">Est {Number(selected.estimated_hours)}h</span>
               <span className="bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">Act {Number(selected.actual_hours)}h</span>
             </div>
-            <div className="border-t pt-2">
+            <div className="border-t border-border pt-2">
               <h4 className="text-sm font-semibold">Log Time</h4>
               <TimeLogForm taskId={selected.id} onLogged={() => {}} logTime={logTime} />
               {(selected.time_entries?.length > 0) && (
                 <div className="mt-2 space-y-1">
-                  {selected.time_entries.map((te:any)=><div key={te.id} className="text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded flex justify-between"><span>{te.username}: {te.hours}h — {te.description || "no note"}</span><span className="text-muted-foreground">{te.date}</span></div>)}
+                  {selected.time_entries.map((te:any)=><div key={te.id} className="text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded flex justify-between"><span>{te.username}: {te.hours}h — {te.description || "no note"}</span><span className="text-muted-foreground dark:text-slate-400">{te.date}</span></div>)}
                 </div>
               )}
             </div>
-            <div className="border-t pt-2">
+            <div className="border-t border-border pt-2">
               <h4 className="text-sm font-semibold">Comments</h4>
               <div className="space-y-1 max-h-32 overflow-auto">
                 {(selected.comments ?? []).map((c:any)=><div key={c.id} className="text-sm bg-slate-50 dark:bg-slate-800 p-2 rounded"><b>{c.author_username || c.author}</b>: {c.body}</div>)}
               </div>
               <div className="flex gap-2 mt-2">
-                <input value={comment} onChange={e=>setComment(e.target.value)} placeholder="Add comment" className="flex-1 border rounded px-2 py-1 text-sm bg-background" />
+                <input value={comment} onChange={e=>setComment(e.target.value)} placeholder="Add comment" className="flex-1 border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
                 <Button onClick={()=>{ if(comment.trim()){ addComment.mutate({taskId:selected.id, body:comment}); setComment("") }}}>Send</Button>
               </div>
             </div>

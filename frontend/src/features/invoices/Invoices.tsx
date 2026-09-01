@@ -38,46 +38,46 @@ export default function Invoices() {
         <Button variant="outline" size="sm" onClick={handleExport}>Export CSV</Button>
       </div>
 
-      <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border space-y-3">
+      <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border space-y-3">
         <h3 className="font-semibold">New Invoice</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <select value={form.client} onChange={e=>setForm({...form, client:e.target.value})} className="border rounded px-2 py-1 text-sm bg-background">
+          <select value={form.client} onChange={e=>setForm({...form, client:e.target.value})} className="border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground">
             <option value="">Select client</option>
             {clientList.map((c:any)=><option key={c.id} value={c.id}>{c.company_name}</option>)}
           </select>
-          <input value={form.number} onChange={e=>setForm({...form, number:e.target.value})} placeholder="Number" className="border rounded px-2 py-1 text-sm bg-background" />
-          <input type="number" value={form.tax_rate} onChange={e=>setForm({...form, tax_rate:Number(e.target.value)})} placeholder="Tax %" className="border rounded px-2 py-1 text-sm bg-background" />
-          <input type="date" value={form.due_date} onChange={e=>setForm({...form, due_date:e.target.value})} className="border rounded px-2 py-1 text-sm bg-background" />
+          <input value={form.number} onChange={e=>setForm({...form, number:e.target.value})} placeholder="Number" className="border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
+          <input type="number" value={form.tax_rate} onChange={e=>setForm({...form, tax_rate:Number(e.target.value)})} placeholder="Tax %" className="border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
+          <input type="date" value={form.due_date} onChange={e=>setForm({...form, due_date:e.target.value})} className="border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
         </div>
         <div className="text-sm">
           {form.items.map((it,i)=>(
             <div key={i} className="flex gap-2 mb-1">
-              <input value={it.description} onChange={e=>{ const n=[...form.items]; n[i].description=e.target.value; setForm({...form, items:n})}} placeholder="Description" className="flex-1 border rounded px-2 py-1 text-sm bg-background" />
-              <input type="number" value={it.quantity} onChange={e=>{ const n=[...form.items]; n[i].quantity=Number(e.target.value); n[i].amount=n[i].quantity*n[i].rate; setForm({...form, items:n})}} className="w-20 border rounded px-1 text-sm bg-background" />
-              <input type="number" value={it.rate} onChange={e=>{ const n=[...form.items]; n[i].rate=Number(e.target.value); n[i].amount=n[i].quantity*n[i].rate; setForm({...form, items:n})}} className="w-24 border rounded px-1 text-sm bg-background" />
+              <input value={it.description} onChange={e=>{ const n=[...form.items]; n[i].description=e.target.value; setForm({...form, items:n})}} placeholder="Description" className="flex-1 border border-border rounded px-2 py-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
+              <input type="number" value={it.quantity} onChange={e=>{ const n=[...form.items]; n[i].quantity=Number(e.target.value); n[i].amount=n[i].quantity*n[i].rate; setForm({...form, items:n})}} className="w-20 border border-border rounded px-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
+              <input type="number" value={it.rate} onChange={e=>{ const n=[...form.items]; n[i].rate=Number(e.target.value); n[i].amount=n[i].quantity*n[i].rate; setForm({...form, items:n})}} className="w-24 border border-border rounded px-1 text-sm bg-background dark:bg-slate-800 text-foreground" />
               <span className="w-20 text-sm py-1">${it.amount}</span>
             </div>
           ))}
-          <button onClick={()=>setForm({...form, items:[...form.items, {description:"", quantity:1, rate:100, amount:100}]})} className="text-xs border px-2 py-1 rounded bg-background">+ Item</button>
+          <button onClick={()=>setForm({...form, items:[...form.items, {description:"", quantity:1, rate:100, amount:100}]})} className="text-xs border border-border px-2 py-1 rounded bg-background dark:bg-slate-800 text-foreground">+ Item</button>
         </div>
         <Button onClick={()=>create.mutate()} disabled={!form.client || !form.number}>Create</Button>
       </div>
 
-      <div className="bg-card dark:bg-slate-900 rounded-lg shadow border overflow-hidden">
+      <div className="bg-card dark:bg-slate-900 rounded-lg shadow border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800"><tr><th className="p-3 text-left">Number</th><th className="p-3">Client</th><th className="p-3">Total</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr></thead>
           <tbody>
-            {isLoading ? <tr><td colSpan={5} className="p-6 text-center">Loading...</td></tr> : list.map((inv:any)=>
+            {isLoading ? <tr><td colSpan={5} className="p-6 text-center text-muted-foreground dark:text-slate-400">Loading...</td></tr> : list.map((inv:any)=>
               <tr key={inv.id} className="border-t border-border">
                 <td className="p-3 font-medium">{inv.number}</td>
                 <td className="p-3">{inv.client}</td>
                 <td className="p-3">${inv.total}</td>
                 <td className="p-3"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs">{inv.status}</span></td>
                 <td className="p-3 flex gap-1">
-                  <select value={inv.status} onChange={e=>updateStatus.mutate({id:inv.id, status:e.target.value})} className="border rounded px-1 py-1 text-xs bg-background">
+                  <select value={inv.status} onChange={e=>updateStatus.mutate({id:inv.id, status:e.target.value})} className="border border-border rounded px-1 py-1 text-xs bg-background dark:bg-slate-800 text-foreground">
                     <option value="draft">Draft</option><option value="sent">Sent</option><option value="paid">Paid</option><option value="overdue">Overdue</option><option value="cancelled">Cancelled</option>
                   </select>
-                  <a href={`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/invoices/${inv.id}/pdf/`} target="_blank" className="border px-2 py-1 rounded text-xs bg-background">PDF</a>
+                  <a href={`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/invoices/${inv.id}/pdf/`} target="_blank" className="border border-border px-2 py-1 rounded text-xs bg-background dark:bg-slate-800 text-foreground">PDF</a>
                 </td>
               </tr>
             )}

@@ -29,7 +29,7 @@ export default function Dashboard() {
         </div>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border">
+        <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
           <h3 className="font-semibold mb-2">Revenue</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={data.monthly_revenue}>
@@ -40,7 +40,7 @@ export default function Dashboard() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border">
+        <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
           <h3 className="font-semibold mb-2">Status Distribution</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
@@ -52,16 +52,16 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border">
+      <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
         <h3 className="font-semibold mb-2">Upcoming Deadlines</h3>
-        <ul className="divide-y">
-          {data.upcoming_deadlines.map((u:any)=><li key={u.id} className="py-2 flex justify-between"><span>{u.title}</span><span className="text-sm text-slate-500">{u.due_date} · {u.status}</span></li>)}
-          {data.upcoming_deadlines.length===0 && <li className="py-2 text-sm text-slate-400">No upcoming tasks</li>}
+        <ul className="divide-y divide-border">
+          {data.upcoming_deadlines.map((u:any)=><li key={u.id} className="py-2 flex justify-between border-border"><span>{u.title}</span><span className="text-sm text-muted-foreground dark:text-slate-400">{u.due_date} · {u.status}</span></li>)}
+          {data.upcoming_deadlines.length===0 && <li className="py-2 text-sm text-muted-foreground dark:text-slate-400">No upcoming tasks</li>}
         </ul>
       </div>
     </div>
   )
 }
 function Card({ title, value }: { title:string, value:any }) {
-  return <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border"><p className="text-sm text-muted-foreground">{title}</p><p className="text-2xl font-bold mt-1">{value}</p></div>
+  return <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border"><p className="text-sm text-muted-foreground dark:text-slate-400">{title}</p><p className="text-2xl font-bold mt-1">{value}</p></div>
 }
