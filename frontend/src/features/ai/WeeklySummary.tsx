@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 export default function WeeklySummary() {
   const [projectId, setProjectId] = useState("")
@@ -22,7 +24,11 @@ export default function WeeklySummary() {
         <input value={projectId} onChange={e=>setProjectId(e.target.value)} placeholder="Project ID" className="border rounded px-2 py-1 text-sm" />
         <Button onClick={fetchSummary} disabled={loading || !projectId}>{loading ? "..." : "Generate"}</Button>
       </div>
-      {summary && <div className="bg-white p-4 rounded-lg shadow whitespace-pre-wrap text-sm">{summary}</div>}
+      {summary && (
+        <div className="bg-white p-4 rounded-lg shadow prose prose-sm max-w-none prose-headings:font-bold prose-h2:text-lg prose-h3:text-base prose-table:border prose-th:bg-slate-50 prose-th:px-3 prose-th:py-1 prose-td:px-3 prose-td:py-1 prose-td:border prose-strong:text-slate-900 prose-li:marker:text-slate-400">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>
+        </div>
+      )}
     </div>
   )
 }
