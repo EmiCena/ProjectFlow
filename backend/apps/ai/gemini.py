@@ -36,13 +36,14 @@ def generate_plan(brief: str):
     import logging
     logger = logging.getLogger(__name__)
     genai.configure(api_key=settings.GEMINI_API_KEY)
-    model_name = settings.GEMINI_MODEL or "gemini-3.7-flash"
+    model_name = settings.GEMINI_MODEL or "gemini-1.5-flash"
     text = None
     last_err = None
-    for try_model in [model_name, "gemini-3.6-flash", "gemini-1.5-flash"]:
+    for try_model in [model_name, "gemini-1.5-flash", "gemini-1.5-flash-001"]:
         try:
             model = genai.GenerativeModel(try_model, system_instruction=SYSTEM_PROMPT, generation_config={"response_mime_type": "application/json", "temperature": 0.7})
-            resp = model.generate_content(f"Client brief: {brief}")
+            # 15s timeout to avoid hanging on Render
+            resp = model.generate_content(f"Client brief: {brief}", request_options={"timeout": 15})
             text = resp.text or "{}"
             logger.info(f"Gemini success with {try_model}")
             break
@@ -94,14 +95,14 @@ def generate_weekly_summary(project_data: dict):
     import logging
     logger = logging.getLogger(__name__)
     genai.configure(api_key=settings.GEMINI_API_KEY)
-    model_name = settings.GEMINI_MODEL or "gemini-3.7-flash"
+    model_name = settings.GEMINI_MODEL or "gemini-1.5-flash"
     text = None
     last_err = None
-    for try_model in [model_name, "gemini-3.6-flash", "gemini-1.5-flash"]:
+    for try_model in [model_name, "gemini-1.5-flash", "gemini-1.5-flash-001"]:
         try:
             model = genai.GenerativeModel(try_model)
             prompt = f"Generate concise weekly status report (progress, blockers, next steps) for: {json.dumps(project_data)[:6000]}"
-            resp = model.generate_content(prompt)
+            resp = model.generate_content(prompt, request_options={"timeout": 15})
             text = resp.text[:2000]
             break
         except Exception as e:
