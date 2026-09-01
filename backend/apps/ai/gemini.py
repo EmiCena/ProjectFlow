@@ -12,26 +12,44 @@ Given a client brief, return ONLY valid JSON with this schema:
 Generate 8-12 tasks. Keep JSON valid, no markdown.
 """
 
+MOCK_PLAN = {
+    "title": "Ecommerce Website",
+    "estimated_duration_days": 45,
+    "milestones": [{"title": "MVP Ready", "due_offset_days": 21}, {"title": "Launch", "due_offset_days": 45}],
+    "tasks": [
+        {"title": "Project setup", "description": "Init repo and CI", "priority": "high", "estimated_hours": 8, "status": "backlog"},
+        {"title": "Database schema", "description": "Design models", "priority": "high", "estimated_hours": 12, "status": "todo"},
+        {"title": "Authentication", "description": "JWT + roles", "priority": "high", "estimated_hours": 16, "status": "todo"},
+        {"title": "Product catalog", "description": "CRUD products", "priority": "medium", "estimated_hours": 16, "status": "todo"},
+        {"title": "Shopping cart", "description": "Cart logic", "priority": "medium", "estimated_hours": 12, "status": "todo"},
+        {"title": "Stripe checkout", "description": "Payment integration", "priority": "urgent", "estimated_hours": 20, "status": "todo"},
+        {"title": "Order management", "description": "Orders + tracking", "priority": "medium", "estimated_hours": 16, "status": "todo"},
+        {"title": "Admin dashboard", "description": "Admin views", "priority": "low", "estimated_hours": 12, "status": "todo"},
+        {"title": "Testing", "description": "Unit + e2e", "priority": "medium", "estimated_hours": 16, "status": "todo"},
+        {"title": "Deployment", "description": "Deploy to Render", "priority": "high", "estimated_hours": 8, "status": "todo"},
+    ]
+}
+
+def _try_openrouter(brief: str):
+    # Try OpenRouter first if key present
+    if getattr(settings, 'OPENROUTER_API_KEY', ''):
+        try:
+            from .openrouter import generate_plan_openrouter
+            return generate_plan_openrouter(brief)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"OpenRouter failed, falling back to Gemini/mock: {e}")
+            # fall through to Gemini/mock
+    return None
+
 def generate_plan(brief: str):
+    # 1. Try OpenRouter
+    data = _try_openrouter(brief)
+    if data:
+        return data
     if not settings.GEMINI_API_KEY:
         # fallback mock for dev without key
-        return {
-            "title": "Ecommerce Website",
-            "estimated_duration_days": 45,
-            "milestones": [{"title": "MVP Ready", "due_offset_days": 21}, {"title": "Launch", "due_offset_days": 45}],
-            "tasks": [
-                {"title": "Project setup", "description": "Init repo and CI", "priority": "high", "estimated_hours": 8, "status": "backlog"},
-                {"title": "Database schema", "description": "Design models", "priority": "high", "estimated_hours": 12, "status": "todo"},
-                {"title": "Authentication", "description": "JWT + roles", "priority": "high", "estimated_hours": 16, "status": "todo"},
-                {"title": "Product catalog", "description": "CRUD products", "priority": "medium", "estimated_hours": 16, "status": "todo"},
-                {"title": "Shopping cart", "description": "Cart logic", "priority": "medium", "estimated_hours": 12, "status": "todo"},
-                {"title": "Stripe checkout", "description": "Payment integration", "priority": "urgent", "estimated_hours": 20, "status": "todo"},
-                {"title": "Order management", "description": "Orders + tracking", "priority": "medium", "estimated_hours": 16, "status": "todo"},
-                {"title": "Admin dashboard", "description": "Admin views", "priority": "low", "estimated_hours": 12, "status": "todo"},
-                {"title": "Testing", "description": "Unit + e2e", "priority": "medium", "estimated_hours": 16, "status": "todo"},
-                {"title": "Deployment", "description": "Deploy to Render", "priority": "high", "estimated_hours": 8, "status": "todo"},
-            ]
-        }
+        return dict(MOCK_PLAN)
     import google.generativeai as genai
     import logging
     logger = logging.getLogger(__name__)
@@ -54,25 +72,11 @@ def generate_plan(brief: str):
     if text is None:
         # No lanza 500 — devuelve mock + error visible en UI
         logger.error(f"All Gemini models failed, returning mock. Last: {last_err}")
-        return {
-            "title": f"Ecommerce Website (mock - Gemini error: {str(last_err)[:120]})",
-            "estimated_duration_days": 45,
-            "milestones": [{"title": "MVP Ready", "due_offset_days": 21}, {"title": "Launch", "due_offset_days": 45}],
-            "tasks": [
-                {"title": "Project setup", "description": "Init repo and CI", "priority": "high", "estimated_hours": 8, "status": "backlog"},
-                {"title": "Database schema", "description": "Design models", "priority": "high", "estimated_hours": 12, "status": "todo"},
-                {"title": "Authentication", "description": "JWT + roles", "priority": "high", "estimated_hours": 16, "status": "todo"},
-                {"title": "Product catalog", "description": "CRUD products", "priority": "medium", "estimated_hours": 16, "status": "todo"},
-                {"title": "Shopping cart", "description": "Cart logic", "priority": "medium", "estimated_hours": 12, "status": "todo"},
-                {"title": "Stripe checkout", "description": "Payment integration", "priority": "urgent", "estimated_hours": 20, "status": "todo"},
-                {"title": "Order management", "description": "Orders + tracking", "priority": "medium", "estimated_hours": 16, "status": "todo"},
-                {"title": "Admin dashboard", "description": "Admin views", "priority": "low", "estimated_hours": 12, "status": "todo"},
-                {"title": "Testing", "description": "Unit + e2e", "priority": "medium", "estimated_hours": 16, "status": "todo"},
-                {"title": "Deployment", "description": "Deploy to Render", "priority": "high", "estimated_hours": 8, "status": "todo"},
-            ],
-            "_mock": True,
-            "_error": str(last_err)[:300]
-        }
+        mock = dict(MOCK_PLAN)
+        mock["title"] = f"Ecommerce Website (mock - Gemini error: {str(last_err)[:120]})"
+        mock["_mock"] = True
+        mock["_error"] = str(last_err)[:300]
+        return mock
     try:
         data = json.loads(text)
     except Exception:
@@ -88,7 +92,20 @@ def generate_plan(brief: str):
         t["estimated_hours"] = min(max(int(t.get("estimated_hours",8)),1),80)
     return data
 
+def _try_summary_openrouter(project_data: dict):
+    if getattr(settings, 'OPENROUTER_API_KEY', ''):
+        try:
+            from .openrouter import generate_summary_openrouter
+            return generate_summary_openrouter(project_data)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"OpenRouter summary failed: {e}")
+    return None
+
 def generate_weekly_summary(project_data: dict):
+    data = _try_summary_openrouter(project_data)
+    if data:
+        return data
     if not settings.GEMINI_API_KEY:
         return "Mock weekly summary: Project progressing well. 3 tasks completed, 2 blockers, next: Stripe integration."
     import google.generativeai as genai

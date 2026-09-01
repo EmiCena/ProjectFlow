@@ -109,9 +109,11 @@ SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
-# Gemini
+# AI - OpenRouter (primary) + Gemini fallback
+OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default=config('GEMINI_API_KEY', default=''))
+OPENROUTER_MODEL = config('OPENROUTER_MODEL', default='nvidia/nemotron-3-ultra-550b-a55b:free')
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
-GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-1.5-flash')
+GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-3.6-flash')
 
 # Static / Media
 STATIC_URL = '/static/'

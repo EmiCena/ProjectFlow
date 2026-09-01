@@ -24,10 +24,14 @@ services:
           property: connectionString
       - key: MONGO_URI
         sync: false # Set in Render dashboard -> MongoDB Atlas URI
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: nvidia/nemotron-3-ultra-550b-a55b:free
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
-        value: gemini-3.7-flash
+        value: gemini-3.6-flash
       - key: CORS_ALLOWED_ORIGINS
         sync: false # https://your-frontend.onrender.com
     # ENTRYPOINT in backend/Dockerfile handles migrate + gunicorn, no dockerCommand needed
