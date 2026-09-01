@@ -93,13 +93,13 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
 }
 
-# CORS - Railway prod must include frontend URL
-_cors_default = 'http://localhost:5173,http://localhost:3000,https://projectflow-web-production-981d.up.railway.app'
+# CORS - prod must include frontend URL (Render + Railway)
+_cors_default = 'http://localhost:5173,http://localhost:3000,https://projectflow-web-production-981d.up.railway.app,https://projectflow-web-4ccs.onrender.com,https://projectflow-web.onrender.com'
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default=_cors_default, cast=Csv())
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ['authorization','content-type','accept','origin','x-csrftoken']
-# Fallback: if env still missing railway origin, allow via regex (safe for this portfolio app)
-CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://.*\.up\.railway\.app$"]
+# Fallback regex for *.onrender.com and *.up.railway.app
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://.*\.up\.railway\.app$", r"^https://.*\.onrender\.com$"]
 
 # Security headers
 SECURE_BROWSER_XSS_FILTER = True
