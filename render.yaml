@@ -35,7 +35,7 @@ services:
   - type: web
     name: projectflow-web
     runtime: static
-    buildCommand: rm -rf frontend/node_modules/.vite; npm ci --prefix frontend && npm run build --prefix frontend
+    buildCommand: rm -rf frontend/node_modules/.vite || true; npm ci --prefix frontend && npm run build --prefix frontend
     staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_URL
