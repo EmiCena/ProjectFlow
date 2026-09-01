@@ -2,8 +2,9 @@
 set -e
 echo "=== ProjectFlow entrypoint ==="
 echo "DATABASE_URL prefix: $(echo $DATABASE_URL | cut -c1-30)..."
+echo "PORT=$PORT"
 echo "Running migrations..."
-python manage.py migrate --noinput
+python manage.py migrate --noinput || echo "migrate failed exit=$? - continuing to start gunicorn"
 echo "Collecting static..."
 python manage.py collectstatic --noinput || true
 if [ $# -gt 0 ]; then
