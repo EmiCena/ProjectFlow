@@ -16,12 +16,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='export', url_name='export')
     def export(self, request):
         import io
-        qs = self.filter_queryset(self.get_queryset()).order_by('created_at')
+        qs = self.filter_queryset(self.get_queryset()).select_related('client').order_by('created_at')
         output = io.StringIO()
         output.write('\ufeff')
         writer = csv.writer(output)
         writer.writerow(['ID','Title','Client','Status','Budget','Progress','Start Date','Deadline','Created At'])
-        for obj in qs.iterator():
+        for obj in qs:
             writer.writerow([obj.id, obj.title, obj.client.company_name if obj.client else '', obj.status, obj.budget, obj.progress, obj.start_date or '', obj.deadline or '', obj.created_at.isoformat()])
         response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="projects.csv"'

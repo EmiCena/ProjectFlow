@@ -16,12 +16,12 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='export', url_name='export')
     def export(self, request):
         import io
-        qs = self.filter_queryset(self.get_queryset()).order_by('created_at')
+        qs = self.filter_queryset(self.get_queryset()).select_related('client','project').order_by('created_at')
         output = io.StringIO()
         output.write('\ufeff')
         writer = csv.writer(output)
         writer.writerow(['ID','Number','Client','Project','Status','Subtotal','Tax Rate','Total','Due Date','Created At'])
-        for obj in qs.iterator():
+        for obj in qs:
             writer.writerow([obj.id, obj.number, obj.client.company_name if obj.client else '', obj.project.title if obj.project else '', obj.status, obj.subtotal, obj.tax_rate, obj.total, obj.due_date or '', obj.created_at.isoformat()])
         response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="invoices.csv"'
