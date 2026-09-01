@@ -11,7 +11,9 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
-    if (error.response?.status === 401 && !original._retry) {
+    const status = error.response?.status
+    // 401 -> try refresh, else redirect with expired flag
+    if (status === 401 && !original._retry) {
       original._retry = true
       const refresh = localStorage.getItem("refresh")
       if (refresh) {
@@ -21,7 +23,18 @@ api.interceptors.response.use(
           if (data.refresh) localStorage.setItem("refresh", data.refresh)
           original.headers.Authorization = `Bearer ${data.access}`
           return api(original)
-        } catch { localStorage.clear(); location.href = "/login" }
+        } catch {
+          localStorage.clear()
+          // expired session -> login with message
+          if (location.pathname !== "/login") location.href = "/login?expired=1"
+          return Promise.reject(error)
+        }
+      } else {
+        // no refresh token -> session expired
+        localStorage.clear()
+        if (location.pathname !== "/login" && location.pathname !== "/register") {
+          location.href = "/login?expired=1"
+        }
       }
     }
     return Promise.reject(error)

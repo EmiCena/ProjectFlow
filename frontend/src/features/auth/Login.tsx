@@ -1,14 +1,17 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 
 export default function Login() {
   const { t } = useTranslation()
   const nav = useNavigate()
+  const [params] = useSearchParams()
   const [form, setForm] = useState({ username: "", password: "" })
   const [err, setErr] = useState("")
+  const expired = params.get("expired") === "1"
+  useEffect(() => { if (expired) setErr(t('auth.sessionExpired') || "Sesión expirada, inicia sesión de nuevo.") }, [expired])
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErr("")
