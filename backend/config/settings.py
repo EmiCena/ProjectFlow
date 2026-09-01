@@ -31,6 +31,8 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     'storages',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     # Local
     'apps.accounts',
     'apps.workspaces',

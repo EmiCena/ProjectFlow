@@ -18,7 +18,15 @@ class TaskViewSet(viewsets.ModelViewSet):
         return qs
     def perform_create(self, serializer):
         project = serializer.validated_data['project']
-        serializer.save(workspace=self.request.user.active_workspace)
+        task = serializer.save(workspace=self.request.user.active_workspace)
+        # email notify if assignee
+        try:
+            assignee = serializer.validated_data.get('assignee')
+            if assignee and assignee.email:
+                from apps.activity.emails import notify_task_assigned
+                notify_task_assigned(task, assignee.email)
+        except Exception: pass
+        return task
     @action(detail=True, methods=['patch'])
     def move(self, request, pk=None):
         task = self.get_object()

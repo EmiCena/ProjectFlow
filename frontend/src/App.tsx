@@ -9,6 +9,8 @@ import ProjectDetail from "./features/projects/ProjectDetail"
 import Board from "./features/board/Board"
 import Invoices from "./features/invoices/Invoices"
 import Documents from "./features/documents/Documents"
+import Subscribe from "./features/billing/Subscribe"
+import TwoFactor from "./features/auth/TwoFactor"
 import Planner from "./features/ai/Planner"
 import WeeklySummary from "./features/ai/WeeklySummary"
 import Layout from "./components/Layout"
@@ -34,6 +36,8 @@ export default function App() {
         <Route path="projects/:id/board" element={<Board />} />
         <Route path="invoices" element={<Invoices />} />
         <Route path="documents" element={<Documents />} />
+        <Route path="billing/subscribe" element={<Subscribe />} />
+        <Route path="settings/2fa" element={<TwoFactor />} />
         <Route path="ai/planner" element={<Planner />} />
         <Route path="ai/summary" element={<WeeklySummary />} />
       </Route>
