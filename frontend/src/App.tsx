@@ -8,6 +8,7 @@ import Projects from "./features/projects/Projects"
 import ProjectDetail from "./features/projects/ProjectDetail"
 import Board from "./features/board/Board"
 import Invoices from "./features/invoices/Invoices"
+import Documents from "./features/documents/Documents"
 import Planner from "./features/ai/Planner"
 import WeeklySummary from "./features/ai/WeeklySummary"
 import Layout from "./components/Layout"
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="projects/:id/board" element={<Board />} />
         <Route path="invoices" element={<Invoices />} />
+        <Route path="documents" element={<Documents />} />
         <Route path="ai/planner" element={<Planner />} />
         <Route path="ai/summary" element={<WeeklySummary />} />
       </Route>

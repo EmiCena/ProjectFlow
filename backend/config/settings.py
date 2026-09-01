@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'drf_spectacular',
+    'storages',
     # Local
     'apps.accounts',
     'apps.workspaces',
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'apps.analytics',
     'apps.activity',
     'apps.ai',
+    'apps.documents',
 ]
 
 MIDDLEWARE = [
@@ -123,11 +125,42 @@ OPENROUTER_MODEL = config('OPENROUTER_MODEL', default='nvidia/nemotron-3-ultra-5
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-3.6-flash')
 
-# Static / Media
+# R2 / S3 - Cloudflare R2 S3-compatible
+AWS_ACCESS_KEY_ID = config('R2_ACCESS_KEY_ID', default=config('AWS_ACCESS_KEY_ID', default=''))
+AWS_SECRET_ACCESS_KEY = config('R2_SECRET_ACCESS_KEY', default=config('AWS_SECRET_ACCESS_KEY', default=''))
+AWS_STORAGE_BUCKET_NAME = config('R2_BUCKET_NAME', default=config('AWS_STORAGE_BUCKET_NAME', default='projectflow-docs'))
+AWS_S3_ENDPOINT_URL = config('R2_ENDPOINT_URL', default=config('AWS_S3_ENDPOINT_URL', default='https://9e6eec84788b8332f22fa9918375e6c7.r2.cloudflarestorage.com'))
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='auto')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_DEFAULT_ACL = None
+# Use S3 for media if bucket configured, else local
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+
+# Stripe
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+
+# Email - SendGrid via SMTP
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
+if SENDGRID_API_KEY:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = config('EMAIL_HOST', default='smtp.sendgrid.net')
+    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='apikey')
+    EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@projectflow.com')
+
+# Static / Media (fallback local if no R2)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+if not AWS_ACCESS_KEY_ID:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SPECTACULAR_SETTINGS = {'TITLE': 'ProjectFlow API', 'VERSION': '1.0.0'}
