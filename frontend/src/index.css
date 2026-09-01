@@ -13,6 +13,8 @@
   --muted: 220 33% 94%; /* #E9EEF6 */
   --destructive: 0 84% 51%; /* #DC2626 */
   --ring: 221 83% 40%;
+  --card: 0 0% 100%; /* white */
+  --card-foreground: 224 76% 25%;
   color-scheme: light;
 }
 .dark {
@@ -26,6 +28,8 @@
   --muted: 215 28% 17%;
   --destructive: 0 62% 30%;
   --ring: 217 91% 60%;
+  --card: 215 28% 17%; /* slate-800 */
+  --card-foreground: 210 20% 98%;
   color-scheme: dark;
 }
 * { border-color: hsl(var(--border)); }
