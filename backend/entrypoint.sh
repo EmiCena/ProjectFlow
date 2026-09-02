@@ -1,10 +1,16 @@
 #!/bin/sh
-set -e
+set +e
 echo "=== ProjectFlow entrypoint ==="
 echo "DATABASE_URL prefix: $(echo $DATABASE_URL | cut -c1-30)..."
 echo "PORT=$PORT"
 echo "Running migrations..."
-python manage.py migrate --noinput || echo "migrate failed exit=$? - continuing to start gunicorn"
+python manage.py migrate --noinput; MIGRATE_EXIT=$?
+echo "migrate exit code: $MIGRATE_EXIT"
+if [ $MIGRATE_EXIT -ne 0 ]; then
+  echo "migrate failed, trying to continue..."
+  python manage.py migrate --noinput --verbosity 2 || echo "second migrate also failed"
+fi
+set -e
 echo "Collecting static..."
 python manage.py collectstatic --noinput || true
 if [ $# -gt 0 ]; then
