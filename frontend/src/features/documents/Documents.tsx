@@ -41,6 +41,10 @@ export default function Documents() {
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["documents"] }); setFile(null); setTitle("") }
   })
+  const delDoc = useMutation({
+    mutationFn: async (id:number) => (await api.delete(`/documents/${id}/`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["documents"] })
+  })
 
   return (
     <div className="p-6 space-y-6">
@@ -56,9 +60,12 @@ export default function Documents() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {list.map((d:any)=>(
-          <div key={d.id} className="bg-card dark:bg-slate-900 p-3 rounded-lg shadow border flex justify-between">
+          <div key={d.id} className="bg-card dark:bg-slate-900 p-3 rounded-lg shadow border flex justify-between items-center">
             <div><div className="font-medium text-sm">{d.title}</div><div className="text-xs text-muted-foreground">{d.username} · {(d.file_size/1024).toFixed(1)} KB</div></div>
-            <button onClick={()=>openDoc(d)} className="text-indigo-600 dark:text-indigo-400 text-sm underline">Open</button>
+            <div className="flex gap-2">
+              <button onClick={()=>openDoc(d)} className="text-indigo-600 dark:text-indigo-400 text-sm underline">Open</button>
+              <button onClick={()=>{ if(confirm(`Borrar ${d.title}?`)) delDoc.mutate(d.id) }} className="text-red-600 dark:text-red-400 text-sm underline">Borrar</button>
+            </div>
           </div>
         ))}
         {list.length===0 && <div className="text-sm text-muted-foreground">No documents yet</div>}
