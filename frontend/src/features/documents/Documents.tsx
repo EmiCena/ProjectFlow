@@ -10,6 +10,24 @@ export default function Documents() {
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState("")
 
+  const openDoc = async (doc:any) => {
+    try {
+      // Try download endpoint first (handles R2 presigned + fallback)
+      const res = await api.get(`/documents/${doc.id}/download/`, { responseType: "blob" })
+      const ct = res.headers["content-type"] || "application/pdf"
+      // If JSON with url, redirect to presigned
+      if (ct.includes("application/json")) {
+        const j = JSON.parse(await res.data.text())
+        if (j.url) { window.open(j.url, "_blank"); return }
+      }
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: ct }))
+      window.open(url, "_blank")
+      setTimeout(()=>window.URL.revokeObjectURL(url), 5000)
+    } catch {
+      // fallback to direct url
+      if (doc.url) window.open(doc.url.startsWith("/") ? `${api.defaults.baseURL}${doc.url}` : doc.url, "_blank")
+    }
+  }
   const upload = useMutation({
     mutationFn: async () => {
       const fd = new FormData()
@@ -37,7 +55,7 @@ export default function Documents() {
         {list.map((d:any)=>(
           <div key={d.id} className="bg-card dark:bg-slate-900 p-3 rounded-lg shadow border flex justify-between">
             <div><div className="font-medium text-sm">{d.title}</div><div className="text-xs text-muted-foreground">{d.username} · {(d.file_size/1024).toFixed(1)} KB</div></div>
-            <a href={d.url} target="_blank" className="text-indigo-600 dark:text-indigo-400 text-sm underline">Open</a>
+            <button onClick={()=>openDoc(d)} className="text-indigo-600 dark:text-indigo-400 text-sm underline">Open</button>
           </div>
         ))}
         {list.length===0 && <div className="text-sm text-muted-foreground">No documents yet</div>}
