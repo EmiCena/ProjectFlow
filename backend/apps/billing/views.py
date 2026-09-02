@@ -10,7 +10,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
     def get_queryset(self):
-        return Invoice.objects.filter(workspace=self.request.user.active_workspace).prefetch_related('items','payments')
+        return Invoice.objects.filter(workspace=self.request.user.active_workspace).prefetch_related('items','payments').order_by('-created_at')
     def perform_create(self, serializer):
         serializer.save(workspace=self.request.user.active_workspace)
     @action(detail=False, methods=['get'], url_path='export', url_name='export')

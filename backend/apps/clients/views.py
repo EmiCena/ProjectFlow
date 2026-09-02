@@ -8,6 +8,6 @@ class ClientViewSet(viewsets.ModelViewSet):
     filterset_fields = ['status']
     search_fields = ['company_name','contact_person','email']
     def get_queryset(self):
-        return Client.objects.filter(workspace=self.request.user.active_workspace)
+        return Client.objects.filter(workspace=self.request.user.active_workspace).order_by('-created_at')
     def perform_create(self, serializer):
         serializer.save(workspace=self.request.user.active_workspace)
