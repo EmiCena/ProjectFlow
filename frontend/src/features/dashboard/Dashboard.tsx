@@ -52,13 +52,33 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
-        <h3 className="font-semibold mb-2">Upcoming Deadlines</h3>
-        <ul className="divide-y divide-border">
-          {data.upcoming_deadlines.map((u:any)=><li key={u.id} className="py-2 flex justify-between border-border"><span>{u.title}</span><span className="text-sm text-muted-foreground dark:text-slate-400">{u.due_date} · {u.status}</span></li>)}
-          {data.upcoming_deadlines.length===0 && <li className="py-2 text-sm text-muted-foreground dark:text-slate-400">No upcoming tasks</li>}
-        </ul>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
+          <h3 className="font-semibold mb-2">Upcoming Deadlines</h3>
+          <ul className="divide-y divide-border">
+            {data.upcoming_deadlines.map((u:any)=><li key={u.id} className="py-2 flex justify-between border-border"><span>{u.title}</span><span className="text-sm text-muted-foreground dark:text-slate-400">{u.due_date} · {u.status}</span></li>)}
+            {data.upcoming_deadlines.length===0 && <li className="py-2 text-sm text-muted-foreground dark:text-slate-400">No upcoming tasks</li>}
+          </ul>
+        </div>
+        <ActivityFeed />
       </div>
+    </div>
+  )
+}
+
+function ActivityFeed() {
+  const { data } = useQuery({ queryKey: ["activity-feed"], queryFn: async () => (await api.get("/activity/?page_size=10")).data })
+  const items = data?.results ?? data ?? []
+  const arr = Array.isArray(items) ? items : (items.results ?? [])
+  return (
+    <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
+      <h3 className="font-semibold mb-2">Recent Activity</h3>
+      <ul className="divide-y divide-border">
+        {(Array.isArray(arr) ? arr : []).slice(0,8).map((a:any,i:number)=>
+          <li key={i} className="py-2 text-sm flex justify-between"><span className="font-medium">{a.event}</span><span className="text-xs text-muted-foreground">{a.entity} #{a.entity_id} · {new Date(a.created_at).toLocaleDateString()}</span></li>
+        )}
+        {arr.length===0 && <li className="py-2 text-sm text-muted-foreground">No activity yet</li>}
+      </ul>
     </div>
   )
 }
