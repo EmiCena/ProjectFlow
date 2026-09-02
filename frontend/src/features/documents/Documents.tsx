@@ -13,16 +13,22 @@ export default function Documents() {
   const openDoc = async (doc:any) => {
     try {
       const res = await api.get(`/documents/${doc.id}/download/`, { responseType: "blob" })
-      const ct = String(res.headers["content-type"] || "application/pdf")
+      const ctRaw = res.headers["content-type"] as string | undefined
+      const ct = ctRaw ? String(ctRaw) : "application/pdf"
       if (ct.includes("application/json")) {
-        const j = JSON.parse(await (res.data as Blob).text())
-        if (j.url) { window.open(j.url, "_blank"); return }
+        const text = await (res.data as Blob).text()
+        try {
+          const j = JSON.parse(text)
+          if (j.url) { window.open(j.url, "_blank"); return }
+        } catch {}
+        // not JSON, fall through
       }
-      const url = window.URL.createObjectURL(new Blob([res.data as BlobPart], { type: ct }))
+      const blob = res.data as Blob
+      const url = window.URL.createObjectURL(new Blob([blob], { type: ct }))
       window.open(url, "_blank")
-      setTimeout(()=>window.URL.revokeObjectURL(url), 5000)
-    } catch {
-      if (doc.url) window.open(doc.url.startsWith("/") ? `${api.defaults.baseURL}${doc.url}` : doc.url, "_blank")
+      setTimeout(()=>window.URL.revokeObjectURL(url), 30000)
+    } catch (e) {
+      console.error("openDoc failed", e)
     }
   }
   const upload = useMutation({
