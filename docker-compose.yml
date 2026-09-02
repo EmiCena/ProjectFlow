@@ -42,7 +42,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: >
-      sh -c "python manage.py makemigrations accounts workspaces clients projects tasks billing &&
+      sh -c "python manage.py makemigrations accounts workspaces clients projects tasks billing documents &&
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
