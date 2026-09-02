@@ -12,19 +12,16 @@ export default function Documents() {
 
   const openDoc = async (doc:any) => {
     try {
-      // Try download endpoint first (handles R2 presigned + fallback)
       const res = await api.get(`/documents/${doc.id}/download/`, { responseType: "blob" })
-      const ct = res.headers["content-type"] || "application/pdf"
-      // If JSON with url, redirect to presigned
+      const ct = String(res.headers["content-type"] || "application/pdf")
       if (ct.includes("application/json")) {
-        const j = JSON.parse(await res.data.text())
+        const j = JSON.parse(await (res.data as Blob).text())
         if (j.url) { window.open(j.url, "_blank"); return }
       }
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: ct }))
+      const url = window.URL.createObjectURL(new Blob([res.data as BlobPart], { type: ct }))
       window.open(url, "_blank")
       setTimeout(()=>window.URL.revokeObjectURL(url), 5000)
     } catch {
-      // fallback to direct url
       if (doc.url) window.open(doc.url.startsWith("/") ? `${api.defaults.baseURL}${doc.url}` : doc.url, "_blank")
     }
   }
