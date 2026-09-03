@@ -1,7 +1,9 @@
 import { useThemeStore, presets, colorLabels, hslToHex, getCurrentColors, COLOR_KEYS, PresetId } from "@/store/theme"
 
 export default function ThemeSettings() {
-  const { theme, preset, setPreset, setColor, resetCustom, toggle } = useThemeStore()
+  const { theme, preset, setPreset, setColor, resetCustom, toggle, customLight, customDark } = useThemeStore()
+  // subscribe to custom colors so picker reacts when preset is already custom
+  void customLight; void customDark
   const colors = getCurrentColors()
 
   return (
