@@ -22,6 +22,7 @@ import Notifications from "./features/notifications/Notifications"
 import Settings from "./features/settings/Settings"
 import ClientPortal from "./features/portal/ClientPortal"
 import Calendar from "./features/calendar/Calendar"
+import TrelloClone from "./features/trello/TrelloClone"
 import Layout from "./components/Layout"
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="ai/planner" element={<Planner />} />
         <Route path="ai/summary" element={<WeeklySummary />} />
         <Route path="ai/chat" element={<ChatWithDocs />} />
+        <Route path="trello" element={<TrelloClone />} />
       </Route>
     </Routes>
   )
