@@ -3,7 +3,7 @@ from django.conf import settings
 from celery import shared_task
 from django.utils.html import strip_tags
 
-@shared_task
+@shared_task(max_retries=2, default_retry_delay=5)
 def send_notification_email(to_email, subject, body, html_body=None):
     # Console fallback in dev without SendGrid
     is_console = settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend'
@@ -13,6 +13,31 @@ def send_notification_email(to_email, subject, body, html_body=None):
         if html_body:
             print(f"HTML len {len(html_body)}")
         return True
+
+    # Try SendGrid HTTP API first (works on Render free where SMTP 587 may be blocked)
+    if settings.SENDGRID_API_KEY:
+        try:
+            import requests
+            headers = {"Authorization": f"Bearer {settings.SENDGRID_API_KEY}", "Content-Type": "application/json"}
+            payload = {
+                "personalizations": [{"to": [{"email": to_email}]}],
+                "from": {"email": settings.DEFAULT_FROM_EMAIL},
+                "subject": subject,
+                "content": [
+                    {"type": "text/plain", "value": strip_tags(body)},
+                    {"type": "text/html", "value": html_body or body},
+                ]
+            }
+            resp = requests.post("https://api.sendgrid.com/v3/mail/send", headers=headers, json=payload, timeout=7)
+            if resp.status_code in (200, 202):
+                print(f"[SENDGRID HTTP] Sent to {to_email} status={resp.status_code}")
+                return True
+            else:
+                print(f"[SENDGRID HTTP FAILED] {resp.status_code} {resp.text[:500]} - falling back to SMTP")
+        except Exception as e:
+            print(f"[SENDGRID HTTP EXCEPTION] {e} - falling back to SMTP")
+
+    # Fallback to SMTP (uses EMAIL_TIMEOUT to avoid gunicorn kill)
     try:
         send_mail(subject, strip_tags(body) if not body.startswith("<") else strip_tags(body), settings.DEFAULT_FROM_EMAIL, [to_email], fail_silently=False, html_message=html_body or body)
         return True
@@ -21,25 +46,23 @@ def send_notification_email(to_email, subject, body, html_body=None):
         return False
 
 def _send_async(to_email, subject, body, html_body=None):
-    # Critical emails (verify/reset) must be sync to guarantee delivery on Render where celery worker may not exist.
-    # Try celery async but always fallback to sync if no worker / error.
+    # Non-blocking: try celery, fallback to sync with short timeout.
+    # Never block gunicorn > EMAIL_TIMEOUT.
     use_celery = bool(settings.CELERY_BROKER_URL and "redis" in settings.CELERY_BROKER_URL.lower())
-    # For verification/reset we force sync (caller should use send_notification_email directly)
-    # Generic path: try async, if fails log and sync
     if use_celery:
         try:
             send_notification_email.delay(to_email, subject, body, html_body)
-            # also show token in logs when DEBUG for local testing without email
             if settings.DEBUG:
                 print(f"[EMAIL QUEUED CELERY] To: {to_email} | Subject: {subject}")
-            return
+            return True
         except Exception as e:
             print(f"[EMAIL CELERY FAILED, FALLBACK SYNC] {e}")
-    # sync fallback (guaranteed)
-    result = send_notification_email(to_email, subject, body, html_body)
-    if not result and settings.DEBUG:
-        print(f"[EMAIL SYNC FAILED] To: {to_email} Subject: {subject}")
-    return result
+    # sync fallback - will respect EMAIL_TIMEOUT and fail fast
+    try:
+        return send_notification_email(to_email, subject, body, html_body)
+    except Exception as e:
+        print(f"[EMAIL SYNC EXCEPTION] {e}")
+        return False
 
 def send_verification_email(user, token):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -58,10 +81,10 @@ def send_verification_email(user, token):
       <p style="font-size: 12px; color: #9ca3af;">Expira en 24 horas. Si no creaste esta cuenta, ignora este mensaje.</p>
     </div>
     """
-    # Use sync for critical verification emails (Render has no celery worker)
     if settings.DEBUG:
         print(f"[DEBUG VERIFY TOKEN] user={user.username} email={user.email} token={token} url={verify_url}")
-    send_notification_email(user.email, subject, body, html)
+    # Async to avoid blocking gunicorn (now render has celery worker)
+    _send_async(user.email, subject, body, html)
 
 def send_password_reset_email(user, token):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -82,7 +105,7 @@ def send_password_reset_email(user, token):
     """
     if settings.DEBUG:
         print(f"[DEBUG RESET TOKEN] user={user.username} email={user.email} token={token} url={reset_url}")
-    send_notification_email(user.email, subject, body, html)
+    _send_async(user.email, subject, body, html)
 
 def send_username_reminder_email(user):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -100,7 +123,7 @@ def send_username_reminder_email(user):
     """
     if settings.DEBUG:
         print(f"[DEBUG USERNAME REMINDER] user={user.username} email={user.email}")
-    send_notification_email(user.email, subject, body, html)
+    _send_async(user.email, subject, body, html)
 
 def notify_task_assigned(task, assignee_email):
     subject = f"Task assigned: {task.title}"

@@ -167,9 +167,10 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
 STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 
-# Email - SendGrid via SMTP
+# Email - SendGrid via SMTP (with timeout to avoid gunicorn worker kill)
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=7, cast=int)  # fail fast, don't hang gunicorn 30s
 if SENDGRID_API_KEY:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = config('EMAIL_HOST', default='smtp.sendgrid.net')
