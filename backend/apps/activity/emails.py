@@ -50,6 +50,41 @@ def send_verification_email(user, token):
     """
     _send_async(user.email, subject, body, html)
 
+def send_password_reset_email(user, token):
+    frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    reset_url = f"{frontend.rstrip('/')}/reset-password?token={token}"
+    subject = "Restablecer contraseña - ProjectFlow"
+    body = f"Hola {user.username},\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nHaz clic aquí: {reset_url}\n\nExpira en 1 hora. Si no fuiste tú, ignora este mensaje.\n\nUsuario: {user.username}"
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px;">
+      <h2 style="color: #1e40af;">ProjectFlow - Recuperar cuenta</h2>
+      <p>Hola <b>{user.username}</b>,</p>
+      <p>Solicitaste restablecer tu contraseña. Tu usuario es <b>{user.username}</b>.</p>
+      <p style="text-align: center; margin: 24px 0;">
+        <a href="{reset_url}" style="background:#1e40af; color:white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Restablecer contraseña</a>
+      </p>
+      <p style="font-size: 12px; color: #6b7280;">O copia este enlace:<br/><a href="{reset_url}">{reset_url}</a></p>
+      <p style="font-size: 12px; color: #9ca3af;">Expira en 1 hora. Si no solicitaste esto, ignora el mensaje y tu contraseña seguirá igual.</p>
+    </div>
+    """
+    _send_async(user.email, subject, body, html)
+
+def send_username_reminder_email(user):
+    frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    login_url = f"{frontend.rstrip('/')}/login"
+    subject = "Tu usuario en ProjectFlow"
+    body = f"Hola,\n\nTu usuario en ProjectFlow es: {user.username}\nEmail asociado: {user.email}\n\nInicia sesión aquí: {login_url}\n\nSi necesitas nueva contraseña, usa 'Olvidé mi contraseña' con este email."
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px;">
+      <h2 style="color: #1e40af;">ProjectFlow - Recordatorio de usuario</h2>
+      <p>Tu usuario es <b style="font-size:18px;">{user.username}</b></p>
+      <p style="color: #6b7280;">Email: {user.email}</p>
+      <p><a href="{login_url}" style="background:#1e40af; color:white; padding: 10px 20px; border-radius: 6px; text-decoration: none;">Ir a login</a></p>
+      <p style="font-size:12px; color:#9ca3af;"><a href="{frontend.rstrip('/')}/forgot-password">¿Olvidaste tu contraseña? Restablecer aquí</a></p>
+    </div>
+    """
+    _send_async(user.email, subject, body, html)
+
 def notify_task_assigned(task, assignee_email):
     subject = f"Task assigned: {task.title}"
     body = f"You have been assigned to task '{task.title}' in project '{task.project.title}'.\n\nProject: {task.project.title}\nTask: {task.title}\nPriority: {task.priority}\n\nView: {getattr(settings,'FRONTEND_URL','')}/projects/{task.project_id}/board"

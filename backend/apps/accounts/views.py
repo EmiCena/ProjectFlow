@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
 from .serializers import RegisterSerializer, UserSerializer
 from .models import User
-from .tokens import generate_verification_token, verify_token
+from .tokens import generate_verification_token, verify_token, generate_reset_token, verify_reset_token
 
 class AuthAnonThrottle(AnonRateThrottle):
     scope = 'anon_burst'
@@ -85,6 +85,74 @@ class ResendVerificationView(APIView):
         except Exception as e:
             print(f"[Resend] failed: {e}")
         return Response({"detail": "Si el email existe, se ha reenviado el enlace."})
+
+class ForgotPasswordView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AuthAnonThrottle]
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return Response({"detail": "Email requerido."}, status=400)
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # do not reveal
+            return Response({"detail": "Si el email existe, se ha enviado el enlace de recuperación."})
+        try:
+            from apps.activity.emails import send_password_reset_email
+            token = generate_reset_token(user)
+            send_password_reset_email(user, token)
+        except Exception as e:
+            print(f"[ForgotPassword] failed: {e}")
+        return Response({"detail": "Si el email existe, se ha enviado el enlace de recuperación."})
+
+class ResetPasswordView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AuthAnonThrottle]
+    def post(self, request):
+        token = request.data.get("token", "").strip()
+        new_password = request.data.get("new_password", "")
+        if not token or not new_password:
+            return Response({"detail": "Token y nueva contraseña requeridos."}, status=400)
+        if len(new_password) < 8:
+            return Response({"detail": "La contraseña debe tener al menos 8 caracteres."}, status=400)
+        try:
+            data = verify_reset_token(token)
+            user = User.objects.get(id=data["user_id"])
+            # verify email matches (optional)
+            if data.get("email") and user.email.lower() != data["email"].lower():
+                return Response({"detail": "Token no válido para este usuario."}, status=400)
+            user.set_password(new_password)
+            # auto-verify if not yet verified (recovery implies ownership)
+            if not user.is_email_verified:
+                user.is_email_verified = True
+                user.email_verified_at = timezone.now()
+            user.save()
+            return Response({"detail": "Contraseña restablecida. Ya puedes iniciar sesión."})
+        except User.DoesNotExist:
+            return Response({"detail": "Usuario no encontrado."}, status=400)
+        except ValueError as ve:
+            return Response({"detail": str(ve)}, status=400)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=400)
+
+class ForgotUsernameView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AuthAnonThrottle]
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return Response({"detail": "Email requerido."}, status=400)
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response({"detail": "Si el email existe, se ha enviado tu usuario."})
+        try:
+            from apps.activity.emails import send_username_reminder_email
+            send_username_reminder_email(user)
+        except Exception as e:
+            print(f"[ForgotUsername] failed: {e}")
+        return Response({"detail": "Si el email existe, se ha enviado tu usuario."})
 
 class MeView(APIView):
     def get(self, request):

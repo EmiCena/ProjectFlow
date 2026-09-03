@@ -62,6 +62,10 @@ export default function Login() {
         )}
         <input className="w-full border border-border rounded px-3 py-2 bg-background dark:bg-slate-800 text-foreground" placeholder={t('auth.username')} value={form.username} onChange={e=>setForm({...form, username:e.target.value})} />
         <input type="password" className="w-full border border-border rounded px-3 py-2 bg-background dark:bg-slate-800 text-foreground" placeholder={t('auth.password')} value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
+        <div className="flex justify-between text-xs">
+          <Link to="/forgot-username" className="text-primary hover:underline">¿Olvidaste tu usuario?</Link>
+          <Link to="/forgot-password" className="text-primary hover:underline">¿Olvidaste tu contraseña?</Link>
+        </div>
         <Button type="submit" className="w-full">{t('auth.login')}</Button>
         <p className="text-sm text-center text-muted-foreground dark:text-slate-400">{t('auth.noAccount')} <Link to="/register" className="text-indigo-600 dark:text-indigo-400">Register</Link> · <Link to="/verify-email" className="text-indigo-600 dark:text-indigo-400">Verificar email</Link></p>
       </form>
