@@ -82,8 +82,9 @@ def send_verification_email(user, token):
     """
     if settings.DEBUG:
         print(f"[DEBUG VERIFY TOKEN] user={user.username} email={user.email} token={token} url={verify_url}")
-    # Async to avoid blocking gunicorn (now render has celery worker)
-    _send_async(user.email, subject, body, html)
+    # Direct HTTP (fast, 443) to work even if celery worker not yet provisioned on Render
+    print(f"[EMAIL DIRECT] To: {user.email} Subject: {subject}")
+    send_notification_email(user.email, subject, body, html)
 
 def send_password_reset_email(user, token):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -104,7 +105,8 @@ def send_password_reset_email(user, token):
     """
     if settings.DEBUG:
         print(f"[DEBUG RESET TOKEN] user={user.username} email={user.email} token={token} url={reset_url}")
-    _send_async(user.email, subject, body, html)
+    print(f"[EMAIL DIRECT] To: {user.email} Subject: {subject}")
+    send_notification_email(user.email, subject, body, html)
 
 def send_username_reminder_email(user):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -122,7 +124,8 @@ def send_username_reminder_email(user):
     """
     if settings.DEBUG:
         print(f"[DEBUG USERNAME REMINDER] user={user.username} email={user.email}")
-    _send_async(user.email, subject, body, html)
+    print(f"[EMAIL DIRECT] To: {user.email} Subject: {subject}")
+    send_notification_email(user.email, subject, body, html)
 
 def notify_task_assigned(task, assignee_email):
     subject = f"Task assigned: {task.title}"
