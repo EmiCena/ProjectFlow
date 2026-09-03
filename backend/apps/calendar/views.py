@@ -24,6 +24,11 @@ def get_flow(request):
     }
     flow = Flow.from_client_config(client_config, scopes=SCOPES)
     flow.redirect_uri = redirect_uri
+    # Disable PKCE to avoid code_verifier mismatch between Auth and Callback (new Flow each request)
+    try:
+        flow.code_verifier = None
+    except Exception:
+        pass
     return flow
 
 class AuthView(APIView):
@@ -32,6 +37,11 @@ class AuthView(APIView):
         if not settings.GOOGLE_CLIENT_ID:
             return Response({"detail": "Google OAuth not configured. Set GOOGLE_CLIENT_ID/SECRET"}, status=400)
         flow = get_flow(request)
+        # Ensure PKCE disabled
+        try:
+            flow.code_verifier = None
+        except Exception:
+            pass
         auth_url, _ = flow.authorization_url(access_type='offline', prompt='consent')
         return Response({"url": auth_url})
 
@@ -39,10 +49,17 @@ class CallbackView(APIView):
     permission_classes = []
     def get(self, request):
         code = request.GET.get('code')
+        error = request.GET.get('error')
+        if error:
+            return Response({"detail": f"Google error: {error}"}, status=400)
         if not code:
             return Response({"detail": "No code"}, status=400)
         flow = get_flow(request)
-        flow.fetch_token(code=code)
+        try:
+            flow.fetch_token(code=code)
+        except Exception as e:
+            print(f"[CALENDAR CALLBACK] fetch_token failed: {e}")
+            return Response({"detail": f"Token exchange failed: {e}"}, status=400)
         creds = flow.credentials
         # Save for the user - need to identify user via state or session
         # For simplicity, use the logged-in user via session if available, else return tokens
