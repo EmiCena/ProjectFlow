@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import Login from "./features/auth/Login"
 import Register from "./features/auth/Register"
+import VerifyEmail from "./features/auth/VerifyEmail"
 import Dashboard from "./features/dashboard/Dashboard"
 import Clients from "./features/clients/Clients"
 import ClientDetail from "./features/clients/ClientDetail"
@@ -37,6 +38,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/" element={<Protected><Layout /></Protected>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />

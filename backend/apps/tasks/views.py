@@ -26,6 +26,11 @@ class TaskViewSet(viewsets.ModelViewSet):
                 from apps.activity.emails import notify_task_assigned
                 notify_task_assigned(task, assignee.email)
         except Exception: pass
+        # log activity task_created
+        try:
+            from apps.activity.mongo import log_activity
+            log_activity(workspace_id=self.request.user.active_workspace_id, user_id=self.request.user.id, event='task_created', entity='task', entity_id=task.id, metadata={'title': task.title, 'project_id': task.project_id})
+        except Exception: pass
         return task
     @action(detail=True, methods=['patch'])
     def move(self, request, pk=None):
@@ -41,6 +46,12 @@ class TaskViewSet(viewsets.ModelViewSet):
             try:
                 from apps.activity.mongo import log_activity
                 log_activity(workspace_id=request.user.active_workspace_id, user_id=request.user.id, event='task_status_changed', entity='task', entity_id=task.id, metadata={'old_status': old_status, 'new_status': new_status})
+            except Exception: pass
+            # notify assignee on status change
+            try:
+                if task.assignee and task.assignee.email and old_status != new_status:
+                    from apps.activity.emails import notify_task_status_changed
+                    notify_task_status_changed(task, request.user.username, task.assignee.email)
             except Exception: pass
         return Response(TaskSerializer(task).data)
     @action(detail=True, methods=['get','post'])

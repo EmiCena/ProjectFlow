@@ -12,7 +12,41 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Invoice.objects.filter(workspace=self.request.user.active_workspace).prefetch_related('items','payments').order_by('-created_at')
     def perform_create(self, serializer):
-        serializer.save(workspace=self.request.user.active_workspace)
+        inv = serializer.save(workspace=self.request.user.active_workspace)
+        # notify client if email available
+        try:
+            if inv.client and inv.client.email:
+                from apps.activity.emails import notify_invoice_sent
+                notify_invoice_sent(inv, inv.client.email)
+        except Exception: pass
+        # also notify workspace owner
+        try:
+            from apps.activity.emails import send_notification_email
+            owner_email = self.request.user.email
+            if owner_email:
+                send_notification_email(owner_email, f"Invoice {inv.number} creada", f"Creaste factura {inv.number} para {inv.client.company_name} por ${inv.total}")
+        except Exception: pass
+    def perform_update(self, serializer):
+        old_status = self.get_object().status
+        inv = serializer.save()
+        new_status = inv.status
+        # notify on status change
+        try:
+            from apps.activity.emails import notify_invoice_sent, notify_invoice_paid
+            client_email = inv.client.email if inv.client and inv.client.email else None
+            if old_status != new_status:
+                if new_status == "sent" and client_email:
+                    notify_invoice_sent(inv, client_email)
+                elif new_status == "paid" and client_email:
+                    notify_invoice_paid(inv, client_email)
+                # log activity
+                try:
+                    from apps.activity.mongo import log_activity
+                    log_activity(workspace_id=self.request.user.active_workspace_id, user_id=self.request.user.id, event='invoice_status_changed', entity='invoice', entity_id=inv.id, metadata={'old_status': old_status, 'new_status': new_status})
+                    if new_status == "paid":
+                        log_activity(workspace_id=self.request.user.active_workspace_id, user_id=self.request.user.id, event='invoice_paid', entity='invoice', entity_id=inv.id, metadata={'total': str(inv.total)})
+                except Exception: pass
+        except Exception: pass
     @action(detail=False, methods=['get'], url_path='export', url_name='export')
     def export(self, request):
         import io

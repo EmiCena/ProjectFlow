@@ -8,11 +8,14 @@ export default function Register() {
   const nav = useNavigate()
   const [form, setForm] = useState({ username:"", email:"", password:"" })
   const [err, setErr] = useState("")
+  const [success, setSuccess] = useState("")
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErr(""); setSuccess("")
     try {
       await api.post("/auth/register/", form)
-      nav("/login")
+      setSuccess("Cuenta creada. Revisa tu email para verificar (revisa spam). Luego inicia sesión. El enlace expira en 24h.")
+      setTimeout(()=> nav("/login"), 2500)
     } catch(e:any){ setErr(JSON.stringify(e.response?.data)) }
   }
   return (
@@ -20,6 +23,7 @@ export default function Register() {
       <form onSubmit={submit} className="bg-card dark:bg-slate-900 p-8 rounded-lg shadow border border-border w-full max-w-md space-y-4">
         <h1 className="text-2xl font-bold">ProjectFlow</h1>
         {err && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-2 rounded text-sm border border-red-200 dark:border-red-900/50">{err}</div>}
+        {success && <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-2 rounded text-sm border border-green-200">{success}</div>}
         <input className="w-full border border-border rounded px-3 py-2 bg-background dark:bg-slate-800 text-foreground" placeholder={t('auth.username')} value={form.username} onChange={e=>setForm({...form, username:e.target.value})} />
         <input className="w-full border border-border rounded px-3 py-2 bg-background dark:bg-slate-800 text-foreground" placeholder={t('auth.email')} value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
         <input type="password" className="w-full border border-border rounded px-3 py-2 bg-background dark:bg-slate-800 text-foreground" placeholder={t('auth.password')} value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />

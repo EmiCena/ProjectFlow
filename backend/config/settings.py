@@ -79,6 +79,16 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_BEAT_SCHEDULE = {
+    'check-deadlines-daily': {
+        'task': 'apps.tasks.celery_tasks.check_upcoming_deadlines',
+        'schedule': 60 * 60 * 24,  # daily
+    },
+    'daily-digest': {
+        'task': 'apps.tasks.celery_tasks.send_daily_digest',
+        'schedule': 60 * 60 * 24,
+    },
+}
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -168,6 +178,12 @@ if SENDGRID_API_KEY:
     EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='apikey')
     EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@projectflow.com')
+
+# Frontend URL for email links
+FRONTEND_URL = config('FRONTEND_URL', default=config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173').split(',')[0].strip())
+# Allow explicit override via env
+if config('FRONTEND_URL', default=''):
+    FRONTEND_URL = config('FRONTEND_URL')
 
 # Static / Media (fallback local if no R2)
 STATIC_URL = '/static/'
