@@ -28,6 +28,7 @@ import ThemeSettings from "./features/settings/ThemeSettings"
 import ClientPortal from "./features/portal/ClientPortal"
 import Calendar from "./features/calendar/Calendar"
 import Layout from "./components/Layout"
+import ErrorBoundary from "./components/ErrorBoundary"
 
 function Protected({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("access")
@@ -38,6 +39,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 export default function App() {
   const { i18n } = useTranslation()
   return (
+    <ErrorBoundary>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -47,12 +49,12 @@ export default function App() {
       <Route path="/forgot-username" element={<ForgotUsername />} />
       <Route path="/" element={<Protected><Layout /></Protected>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:id" element={<ClientDetail />} />
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
-        <Route path="projects/:id/board" element={<Board />} />
+        <Route path="projects/:id/board" element={<ErrorBoundary><Board /></ErrorBoundary>} />
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/:id" element={<InvoiceDetail />} />
         <Route path="tasks/:id" element={<TaskDetail />} />
@@ -64,11 +66,12 @@ export default function App() {
         <Route path="billing/subscribe" element={<Subscribe />} />
         <Route path="settings/2fa" element={<TwoFactor />} />
         <Route path="portal" element={<ClientPortal />} />
-        <Route path="calendar" element={<Calendar />} />
+        <Route path="calendar" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
         <Route path="ai/planner" element={<Planner />} />
         <Route path="ai/summary" element={<WeeklySummary />} />
         <Route path="ai/chat" element={<ChatWithDocs />} />
       </Route>
     </Routes>
+    </ErrorBoundary>
   )
 }

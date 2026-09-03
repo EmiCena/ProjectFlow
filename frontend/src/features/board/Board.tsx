@@ -82,8 +82,9 @@ export default function Board() {
   const [addCol, setAddCol] = useState<string>("todo")
   const [addForm, setAddForm] = useState({ title: "", description: "", priority: "medium", estimated_hours: 8 })
 
-  const { data: tasksData } = useQuery({ queryKey:["tasks", id], queryFn: async () => (await api.get(`/tasks/?project=${id}`)).data })
+  const { data: tasksData, isLoading } = useQuery({ queryKey:["tasks", id], queryFn: async () => (await api.get(`/tasks/?project=${id}`)).data })
   const tasks = useMemo(()=> tasksData?.results ?? tasksData ?? [], [tasksData])
+  if (isLoading) return <div className="p-6 text-sm text-muted-foreground">Loading board...</div>
 
   const create = useMutation({ mutationFn: async (payload:any) => (await api.post("/tasks/", payload)).data, onSuccess: () => qc.invalidateQueries({queryKey:["tasks", id]}) })
   const move = useMutation({ mutationFn: async ({taskId, status, position}:any) => (await api.patch(`/tasks/${taskId}/move/`, {status, position})).data, onSuccess: () => qc.invalidateQueries({queryKey:["tasks", id]}) })
