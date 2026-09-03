@@ -52,8 +52,7 @@ def _send_async(to_email, subject, body, html_body=None):
     if use_celery:
         try:
             send_notification_email.delay(to_email, subject, body, html_body)
-            if settings.DEBUG:
-                print(f"[EMAIL QUEUED CELERY] To: {to_email} | Subject: {subject}")
+            print(f"[EMAIL QUEUED CELERY] To: {to_email} | Subject: {subject}")
             return True
         except Exception as e:
             print(f"[EMAIL CELERY FAILED, FALLBACK SYNC] {e}")
