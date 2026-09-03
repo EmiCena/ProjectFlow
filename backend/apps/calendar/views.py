@@ -31,7 +31,6 @@ class AuthView(APIView):
         if not settings.GOOGLE_CLIENT_ID:
             return Response({"detail": "Google OAuth not configured. Set GOOGLE_CLIENT_ID/SECRET"}, status=400)
         flow = get_flow(request)
-        # Generate and persist PKCE verifier explicitly to handle new Flow in callback
         try:
             import secrets
             from django.core.cache import cache
@@ -44,7 +43,9 @@ class AuthView(APIView):
             from django.core.cache import cache
             if getattr(flow, 'code_verifier', None):
                 cache.set(f"pkce_{state}", flow.code_verifier, timeout=600)
-                print(f"[CALENDAR AUTH] pkce stored for state={state[:10]}...")
+            # Map state to user for auto-link on callback
+            cache.set(f"oauth_user_{state}", request.user.id, timeout=600)
+            print(f"[CALENDAR AUTH] pkce+user stored state={state[:10]}... user={request.user.id}")
         except Exception as e:
             print(f"[CALENDAR AUTH] cache pkce failed: {e}")
         return Response({"url": auth_url})
@@ -60,7 +61,6 @@ class CallbackView(APIView):
         if not code:
             return Response({"detail": "No code"}, status=400)
         flow = get_flow(request)
-        # Restore PKCE verifier if present
         try:
             from django.core.cache import cache
             if state:
@@ -75,10 +75,35 @@ class CallbackView(APIView):
             print(f"[CALENDAR CALLBACK] fetch_token failed: {e}")
             return Response({"detail": f"Token exchange failed: {e}"}, status=400)
         creds = flow.credentials
-        # Save for the user - need to identify user via state or session
-        # For simplicity, use the logged-in user via session if available, else return tokens
-        from django.contrib.auth import get_user_model
-        # Try to get user from session or require auth header
+        # Auto-link via state -> user (professional flow)
+        try:
+            from django.core.cache import cache
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            user_id = cache.get(f"oauth_user_{state}") if state else None
+            if user_id and creds.refresh_token:
+                user = User.objects.get(id=user_id)
+                CalendarConnection.objects.update_or_create(user=user, defaults={"google_refresh_token": creds.refresh_token})
+                print(f"[CALENDAR CALLBACK] auto-linked user {user_id}")
+                # Redirect to frontend with success
+                frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+                return redirect(f"{frontend.rstrip('/')}/calendar?connected=1")
+            # Fallback: try auth header user
+            auth = request.headers.get('Authorization', '')
+            if auth.startswith('Bearer ') and creds.refresh_token:
+                from rest_framework_simplejwt.authentication import JWTAuthentication
+                try:
+                    validated = JWTAuthentication().authenticate(request)
+                    if validated:
+                        user, _ = validated
+                        CalendarConnection.objects.update_or_create(user=user, defaults={"google_refresh_token": creds.refresh_token})
+                        frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+                        return redirect(f"{frontend.rstrip('/')}/calendar?connected=1")
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[CALENDAR CALLBACK] auto-link failed: {e}")
+        # Fallback manual (old flow)
         return Response({"refresh_token": creds.refresh_token, "access_token": creds.token, "message": "Save this refresh_token as GOOGLE_REFRESH_TOKEN for your user. For now, use /api/calendar/connect/ with it."})
 
 class ConnectView(APIView):

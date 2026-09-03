@@ -1,20 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
 export default function Calendar() {
   const qc = useQueryClient()
+  const [params, setParams] = useSearchParams()
   const { data } = useQuery({ queryKey: ["calendar-events"], queryFn: async () => (await api.get("/calendar/events/")).data })
   const events = Array.isArray(data) ? data : []
   const [form, setForm] = useState({ title: "", start_time: "", end_time: "" })
   const [refreshToken, setRefreshToken] = useState("")
+  const [connected, setConnected] = useState(false)
+
+  useEffect(() => {
+    if (params.get("connected") === "1") {
+      setConnected(true)
+      toast.success("¡Google Calendar conectado automáticamente!")
+      setParams({}, { replace: true })
+      qc.invalidateQueries({ queryKey: ["calendar-events"] })
+    }
+  }, [params])
 
   const auth = async () => {
     try {
       const { data } = await api.get("/calendar/auth/")
-      if (data.url) window.open(data.url, "_blank")
+      if (data.url) window.location.href = data.url
       else toast.error("No se pudo obtener URL de auth")
     } catch (e:any) { toast.error(e.response?.data?.detail || e.message) }
   }
@@ -24,6 +36,7 @@ export default function Calendar() {
       await api.post("/calendar/connect/", { refresh_token: refreshToken.trim() })
       toast.success("Cuenta conectada")
       setRefreshToken("")
+      setConnected(true)
       qc.invalidateQueries({ queryKey: ["calendar-events"] })
     } catch (e:any) { toast.error(e.response?.data?.detail || e.message) }
   }
@@ -35,13 +48,17 @@ export default function Calendar() {
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-2xl font-bold">Google Calendar</h1>
+      {connected && <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 p-3 rounded">✅ Conectado a Google Calendar</div>}
       <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border space-y-3">
-        <p className="text-sm text-muted-foreground">Conecta tu Google Calendar (OAuth2) para sincronizar deadlines y milestones. Necesitas GOOGLE_CLIENT_ID/SECRET en el backend.</p>
-        <Button variant="outline" onClick={auth}>1. Abrir Auth URL (Google)</Button>
-        <div className="flex gap-2">
-          <input placeholder="Pega aquí el refresh_token del callback" value={refreshToken} onChange={e=>setRefreshToken(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm bg-background" />
-          <Button variant="outline" onClick={connect} disabled={!refreshToken.trim()}>2. Conectar</Button>
-        </div>
+        <p className="text-sm text-muted-foreground">Conecta tu Google Calendar con un clic. Serás redirigido a Google y volverás automáticamente.</p>
+        <Button onClick={auth} className="w-full sm:w-auto">🔗 Conectar con Google Calendar</Button>
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">¿No funciona el auto? Conectar manual</summary>
+          <div className="flex gap-2 mt-2">
+            <input placeholder="Pega refresh_token" value={refreshToken} onChange={e=>setRefreshToken(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm bg-background" />
+            <Button variant="outline" onClick={connect} disabled={!refreshToken.trim()}>Conectar manual</Button>
+          </div>
+        </details>
       </div>
       <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border space-y-2">
         <h3 className="font-semibold">Crear evento</h3>
