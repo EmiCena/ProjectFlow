@@ -70,13 +70,16 @@ export default function Layout() {
               </div>
             </div>
           </div>
-          <div className="p-2 mt-auto">
-            <div className="bg-[#22272b] rounded-full px-3 py-2 flex items-center gap-2 text-xs">
+          <div className="p-2 mt-auto space-y-1">
+            <NavLink to="/settings" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/60 hover:bg-white/10'}`}><span>⚙️</span> {t('nav.settings')}</NavLink>
+            <NavLink to="/settings/theme" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-xs ${isActive?'bg-[#22272b] text-white':'text-white/40 hover:bg-white/10'}`}>🎨 Theme</NavLink>
+            <NavLink to="/notifications" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-xs ${isActive?'bg-[#22272b] text-white':'text-white/40 hover:bg-white/10'}`}>🔔 Notifications</NavLink>
+            <div className="bg-[#22272b] rounded-full px-3 py-2 flex items-center gap-2 text-xs mt-2">
               <span className="w-6 h-6 rounded-full bg-[#579dff] flex items-center justify-center text-[10px]">✦</span>
               <span className="bg-[#579dff] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">NUEVO</span>
               <span className="text-white/80">Consolida tus tareas por hacer</span>
             </div>
-            <button onClick={logout} className="w-full mt-2 text-left px-2 py-2 hover:bg-white/10 rounded text-sm text-white/60 flex items-center gap-2">⎋ {t('nav.logout')}</button>
+            <button onClick={logout} className="w-full text-left px-2 py-2 hover:bg-white/10 rounded text-sm text-white/60 flex items-center gap-2">⎋ {t('nav.logout')}</button>
           </div>
         </aside>
 
