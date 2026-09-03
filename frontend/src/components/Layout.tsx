@@ -1,94 +1,128 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useThemeStore } from "@/store/theme"
+
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const nav = useNavigate()
   const { theme, toggle } = useThemeStore()
   const logout = () => { localStorage.clear(); nav("/login") }
-  const linkBase = "flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 min-h-[44px]"
-  const active = "bg-primary text-white shadow-sm"
-  const idle = "text-slate-300 hover:bg-white/10 hover:text-white"
+
   return (
-    <div className="min-h-screen flex bg-background">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white text-foreground px-3 py-2 rounded shadow z-50">Skip to main</a>
-      <aside className="w-64 bg-slate-900 text-white p-4 flex flex-col border-r border-slate-800 sticky top-0 h-dvh overflow-auto" aria-label="Primary navigation">
-        <div className="mb-8">
-          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-            <span className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white text-sm font-mono">PF</span>
-            ProjectFlow
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">Agency OS — {i18n.language.toUpperCase()}</p>
+    <div className="min-h-screen bg-[#212121] text-white flex flex-col overflow-hidden">
+      {/* Trello Top Bar */}
+      <header className="h-11 bg-[#1d2125] border-b border-[#3c4043] flex items-center gap-2 px-2 shrink-0">
+        <button className="h-8 w-8 flex items-center justify-center hover:bg-white/10 rounded text-white/80" aria-label="Menu">☰</button>
+        <div className="flex items-center gap-1.5 bg-[#579dff]/20 hover:bg-[#579dff]/30 px-2.5 py-1 rounded-[3px] cursor-pointer">
+          <span className="w-5 h-5 bg-white rounded-[2px] flex items-center justify-center text-[#0c66e4] font-bold text-xs">T</span>
+          <span className="font-bold text-sm tracking-tight">ProjectFlow</span>
+          <span className="text-xs bg-white/20 px-1 rounded ml-1">Trello</span>
         </div>
-        <nav className="space-y-1 flex-1" role="navigation" aria-label="Main">
-          <NavLink to="/dashboard" className={({isActive})=> `${linkBase} ${isActive?active:idle}`} aria-current="page">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            {t('nav.dashboard')}
-          </NavLink>
-          <NavLink to="/clients" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-            {t('nav.clients')}
-          </NavLink>
-          <NavLink to="/projects" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            {t('nav.projects')}
-          </NavLink>
-          <NavLink to="/invoices" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            {t('nav.invoices')}
-          </NavLink>
-          <NavLink to="/billing/subscribe" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
-            Billing
-          </NavLink>
-          <NavLink to="/documents" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-            Documents
-          </NavLink>
-          <NavLink to="/team" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-            Team
-          </NavLink>
-          <NavLink to="/notifications" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 8A6 6 0 006 8c0 7-6 9-6 9h16s-6-2-6-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-            Notifications
-          </NavLink>
-          <NavLink to="/settings" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-            Settings
-          </NavLink>
-          <div className="pt-3 mt-3 border-t border-white/10">
-            <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">AI</p>
-            <NavLink to="/ai/planner" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
-              AI Planner
-            </NavLink>
-            <NavLink to="/ai/summary" className={({isActive})=> `${linkBase} ${isActive?active:idle}`}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              Weekly Summary
-            </NavLink>
+        <div className="flex-1 max-w-[720px] mx-2 hidden md:flex">
+          <div className="relative w-full">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/60 text-sm">⌕</span>
+            <input placeholder="Buscar" className="w-full bg-[#22272b] border border-[#3c4043] rounded-[5px] pl-8 pr-3 py-1.5 text-sm placeholder:text-white/60 focus:outline-none focus:border-[#579dff] focus:bg-[#22272b]" />
           </div>
-        </nav>
-        <div className="space-y-2 pt-4 border-t border-white/10">
-          <button onClick={toggle} aria-pressed={theme==="dark"} aria-label="Toggle dark mode" className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium bg-white/5 hover:bg-white/10 text-slate-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20">
-            {theme==="dark" ? (
-              <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Light mode</>
-            ) : (
-              <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark mode</>
-            )}
-          </button>
-          <label htmlFor="lang" className="sr-only">Language</label>
-          <select id="lang" value={i18n.language} onChange={e=>i18n.changeLanguage(e.target.value)} className="w-full bg-slate-800 border border-white/10 rounded-md px-3 py-2.5 text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-white/20">
-            <option value="es">Español</option>
-            <option value="en">English</option>
-          </select>
-          <button onClick={logout} className="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-md text-sm min-h-[44px] flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20" aria-label="Logout">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            {t('nav.logout')}
-          </button>
         </div>
-      </aside>
-      <main id="main" className="flex-1 bg-background overflow-auto min-h-dvh focus:outline-none" tabIndex={-1}><Outlet /></main>
+        <button className="bg-[#579dff] hover:bg-[#85b8ff] text-[#1d2125] font-medium text-sm px-3 py-1.5 rounded-[3px] flex items-center gap-1.5">✦ Crear</button>
+        <div className="ml-auto flex items-center gap-1">
+          <button className="h-8 w-8 hover:bg-white/10 rounded-full flex items-center justify-center text-white/70">🔔</button>
+          <button className="h-8 w-8 hover:bg-white/10 rounded-full flex items-center justify-center text-white/70">ⓘ</button>
+          <button onClick={toggle} className="h-8 w-8 hover:bg-white/10 rounded-full flex items-center justify-center text-white/70" title="Toggle theme">{theme==="dark" ? "☀️" : "🌙"}</button>
+          <span className="h-6 w-6 rounded-full bg-[#e67e22] flex items-center justify-center text-xs font-bold">EC</span>
+          <select value={i18n.language} onChange={e=>i18n.changeLanguage(e.target.value)} className="bg-transparent text-xs text-white/60 border-0 focus:ring-0 hidden md:block">
+            <option value="es" className="text-black">ES</option><option value="en" className="text-black">EN</option>
+          </select>
+        </div>
+      </header>
+
+      {/* 3-panel Trello layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left: Bandeja de entrada - like screenshot */}
+        <aside className="w-[280px] bg-[#1d2125] border-r border-[#3c4043] hidden lg:flex flex-col shrink-0">
+          <div className="p-3 flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><span className="w-6 h-6 bg-[#22272b] rounded flex items-center justify-center text-xs">📥</span> Bandeja de entrada</h2>
+            <div className="flex gap-1 text-white/40"><button className="hover:text-white">≡</button><button className="hover:text-white">⋯</button></div>
+          </div>
+          <div className="px-3 pb-2">
+            <div className="bg-[#22272b] rounded-[5px] px-3 py-2 text-sm text-white/50">Añade una tarjeta</div>
+          </div>
+          <div className="flex-1 overflow-auto px-2 space-y-2 pb-2">
+            <nav className="space-y-0.5">
+              <NavLink to="/dashboard" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}><span className="text-base">▦</span> {t('nav.dashboard')}</NavLink>
+              <NavLink to="/clients" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}><span>👥</span> {t('nav.clients')}</NavLink>
+              <NavLink to="/projects" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}><span>📄</span> {t('nav.projects')}</NavLink>
+              <NavLink to="/invoices" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}><span>📃</span> {t('nav.invoices')}</NavLink>
+              <NavLink to="/documents" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}>📁 Documents</NavLink>
+              <NavLink to="/team" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}>👥 Team</NavLink>
+            </nav>
+            <div className="pt-3 mt-3 border-t border-white/10">
+              <p className="px-2 text-[11px] font-bold text-white/40 uppercase tracking-wider mb-1">AI</p>
+              <NavLink to="/ai/planner" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}>✦ AI Planner</NavLink>
+              <NavLink to="/ai/summary" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}>📊 Weekly Summary</NavLink>
+              <NavLink to="/ai/chat" className={({isActive})=>`flex items-center gap-2 px-2.5 py-2 rounded-[3px] text-sm ${isActive?'bg-[#22272b] text-white':'text-white/70 hover:bg-white/10'}`}>💬 AI Chat</NavLink>
+            </div>
+            <div className="space-y-2 mt-4">
+              <div className="bg-[#22272b] rounded-[5px] p-2.5 border border-[#3c4043]">
+                <div className="text-sm">comer pollo</div>
+                <div className="text-xs text-white/50 mt-1">Míralo, envíalo, guárdalo para más tarde</div>
+                <div className="flex gap-2 mt-2 text-white/40 text-xs">✉️ ≡</div>
+              </div>
+            </div>
+          </div>
+          <div className="p-2 mt-auto">
+            <div className="bg-[#22272b] rounded-full px-3 py-2 flex items-center gap-2 text-xs">
+              <span className="w-6 h-6 rounded-full bg-[#579dff] flex items-center justify-center text-[10px]">✦</span>
+              <span className="bg-[#579dff] text-white text-[10px] px-1.5 py-0.5 rounded font-bold">NUEVO</span>
+              <span className="text-white/80">Consolida tus tareas por hacer</span>
+            </div>
+            <button onClick={logout} className="w-full mt-2 text-left px-2 py-2 hover:bg-white/10 rounded text-sm text-white/60 flex items-center gap-2">⎋ {t('nav.logout')}</button>
+          </div>
+        </aside>
+
+        {/* Center: Planificador / Calendar */}
+        <div className="w-[380px] bg-[#1d2125] border-r border-[#3c4043] hidden xl:flex flex-col shrink-0">
+          <div className="h-10 flex items-center gap-2 px-3 border-b border-[#3c4043] bg-[#1d2125]">
+            <span className="text-sm">📅</span>
+            <select className="bg-transparent text-sm font-medium text-white focus:outline-none"><option>sept</option></select>
+            <button className="ml-2 text-white/60 hover:text-white">‹</button><button className="bg-[#22272b] px-3 py-1 rounded text-sm">Hoy</button><button className="text-white/60 hover:text-white">›</button>
+            <div className="ml-auto flex gap-1"><button className="h-6 w-6 bg-[#22272b] rounded flex items-center justify-center text-white/60">⚙️</button><button className="h-6 w-6 bg-[#22272b] rounded flex items-center justify-center text-white/60">⋯</button></div>
+          </div>
+          <div className="flex-1 overflow-auto p-3">
+            <div className="bg-[#1c3b5a] rounded-lg p-4 text-center border border-[#3c4043]">
+              <h3 className="font-semibold text-white">Conectar tu cuenta de calendario</h3>
+              <p className="text-xs text-white/70 mt-2">Ve todos tus eventos. Arrastra, suelta y hazlo. Programa tus tareas pendientes en el calendario y dedica tiempo a lo que de verdad importa.</p>
+              <button className="mt-3 bg-[#579dff] hover:bg-[#85b8ff] text-[#1d2125] text-sm font-medium px-4 py-1.5 rounded">↻ Conectar una cuenta</button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div><h4 className="text-sm font-medium text-white">Hoy <span className="text-white/50">mié 2 de septiembre</span></h4><p className="text-xs text-white/40 mt-1">No hay nada planeado para hoy</p></div>
+              <div><h4 className="text-sm font-medium text-white">Mañana <span className="text-white/50">jue 3 de septiembre</span></h4><p className="text-xs text-white/40 mt-1">No hay nada planeado</p></div>
+              <div><h4 className="text-sm font-medium text-white">vie 4 de septiembre</h4><p className="text-xs text-white/40 mt-1">No hay nada planeado</p></div>
+            </div>
+          </div>
+          <div className="p-2 flex gap-1 text-xs">
+            <NavLink to="/calendar" className={({isActive})=>`px-3 py-1.5 rounded flex items-center gap-1 ${isActive?'bg-[#579dff] text-[#1d2125]':'bg-[#22272b] text-white/70'}`}>📥 Bandeja de entrada</NavLink>
+            <NavLink to="/dashboard" className={({isActive})=>`px-3 py-1.5 rounded flex items-center gap-1 ${isActive?'bg-[#579dff] text-[#1d2125]':'bg-[#22272b] text-white/70'}`}>📅 Planificador</NavLink>
+            <NavLink to="/projects" className={({isActive})=>`px-3 py-1.5 rounded flex items-center gap-1 ${isActive?'bg-[#579dff] text-[#1d2125]':'bg-[#22272b] text-white/70'}`}>▦ Tablero</NavLink>
+          </div>
+        </div>
+
+        {/* Right: Main board - purple gradient like screenshot */}
+        <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-[#7a3e8b] via-[#8b5a9c] to-[#9b6bb0]">
+          <div className="h-10 bg-black/20 backdrop-blur flex items-center gap-3 px-3 text-white">
+            <h2 className="font-bold text-sm">Mi tablero de Trello</h2>
+            <span className="text-xs opacity-70">⋮ 00▾</span>
+            <div className="ml-auto flex items-center gap-2">
+              <button className="p-1 hover:bg-white/10 rounded">≡</button>
+              <button className="bg-white text-[#1d2125] px-3 py-1 rounded text-sm font-medium flex items-center gap-1"><span className="text-[#1d2125]">👤</span> Compartir</button>
+              <button className="hover:bg-white/10 p-1 rounded">⋯</button>
+            </div>
+          </div>
+          <main id="main" className="flex-1 overflow-auto focus:outline-none" tabIndex={-1}>
+            <Outlet />
+          </main>
+        </div>
+      </div>
     </div>
   )
 }
