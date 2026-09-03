@@ -30,6 +30,7 @@ export default function Notifications() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["activity"],
     queryFn: async () => (await api.get("/activity/")).data,
+    retry: false,
   })
 
   const list = Array.isArray(data) ? data : data?.results ?? []

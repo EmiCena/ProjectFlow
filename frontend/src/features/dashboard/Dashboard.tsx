@@ -7,7 +7,8 @@ export default function Dashboard() {
   const { t } = useTranslation()
   const { data, isLoading } = useQuery({
     queryKey: ["summary"],
-    queryFn: async () => (await api.get("/analytics/summary/")).data
+    queryFn: async () => (await api.get("/analytics/summary/")).data,
+    retry: false,
   })
   if (isLoading) return <div className="p-6">{t('common.loading')}</div>
   if (!data) return <div className="p-6">No workspace — crea uno</div>
@@ -67,7 +68,7 @@ export default function Dashboard() {
 }
 
 function ActivityFeed() {
-  const { data } = useQuery({ queryKey: ["activity-feed"], queryFn: async () => (await api.get("/activity/?page_size=10")).data })
+  const { data } = useQuery({ queryKey: ["activity-feed"], queryFn: async () => (await api.get("/activity/?page_size=10")).data, retry: false })
   const items = data?.results ?? data ?? []
   const arr = Array.isArray(items) ? items : (items.results ?? [])
   return (

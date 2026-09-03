@@ -22,7 +22,7 @@ api.interceptors.response.use(
       // emit for UI countdown
       window.dispatchEvent(new CustomEvent('rate-limited', { detail: { retryAfter: Number(retryAfter), path: original?.url } }))
     }
-    // 401 -> try refresh, else redirect with expired flag
+    // 401 -> try refresh, else clear and let Protected redirect (no hard reload to avoid scheduler startTime crash)
     if (status === 401 && !original._retry) {
       original._retry = true
       const refresh = localStorage.getItem("refresh")
@@ -35,16 +35,12 @@ api.interceptors.response.use(
           return api(original)
         } catch {
           localStorage.clear()
-          // expired session -> login with message
-          if (location.pathname !== "/login") location.href = "/login?expired=1"
+          window.dispatchEvent(new CustomEvent('auth-expired'))
           return Promise.reject(error)
         }
       } else {
-        // no refresh token -> session expired
         localStorage.clear()
-        if (location.pathname !== "/login" && location.pathname !== "/register") {
-          location.href = "/login?expired=1"
-        }
+        window.dispatchEvent(new CustomEvent('auth-expired'))
       }
     }
     return Promise.reject(error)
