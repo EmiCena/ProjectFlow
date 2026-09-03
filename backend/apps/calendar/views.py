@@ -12,7 +12,6 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 def get_flow(request):
     redirect_uri = request.build_absolute_uri('/api/calendar/callback/')
-    # Use env vars for client config
     client_config = {
         "web": {
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -24,11 +23,6 @@ def get_flow(request):
     }
     flow = Flow.from_client_config(client_config, scopes=SCOPES)
     flow.redirect_uri = redirect_uri
-    # Disable PKCE to avoid code_verifier mismatch between Auth and Callback (new Flow each request)
-    try:
-        flow.code_verifier = None
-    except Exception:
-        pass
     return flow
 
 class AuthView(APIView):
@@ -37,12 +31,22 @@ class AuthView(APIView):
         if not settings.GOOGLE_CLIENT_ID:
             return Response({"detail": "Google OAuth not configured. Set GOOGLE_CLIENT_ID/SECRET"}, status=400)
         flow = get_flow(request)
-        # Ensure PKCE disabled
+        # Generate and persist PKCE verifier explicitly to handle new Flow in callback
         try:
-            flow.code_verifier = None
+            import secrets
+            from django.core.cache import cache
+            verifier = secrets.token_urlsafe(64)[:128]
+            flow.code_verifier = verifier
         except Exception:
             pass
-        auth_url, _ = flow.authorization_url(access_type='offline', prompt='consent')
+        auth_url, state = flow.authorization_url(access_type='offline', prompt='consent')
+        try:
+            from django.core.cache import cache
+            if getattr(flow, 'code_verifier', None):
+                cache.set(f"pkce_{state}", flow.code_verifier, timeout=600)
+                print(f"[CALENDAR AUTH] pkce stored for state={state[:10]}...")
+        except Exception as e:
+            print(f"[CALENDAR AUTH] cache pkce failed: {e}")
         return Response({"url": auth_url})
 
 class CallbackView(APIView):
@@ -50,11 +54,21 @@ class CallbackView(APIView):
     def get(self, request):
         code = request.GET.get('code')
         error = request.GET.get('error')
+        state = request.GET.get('state')
         if error:
             return Response({"detail": f"Google error: {error}"}, status=400)
         if not code:
             return Response({"detail": "No code"}, status=400)
         flow = get_flow(request)
+        # Restore PKCE verifier if present
+        try:
+            from django.core.cache import cache
+            if state:
+                verifier = cache.get(f"pkce_{state}")
+                if verifier:
+                    flow.code_verifier = verifier
+        except Exception as e:
+            print(f"[CALENDAR CALLBACK] cache get pkce failed: {e}")
         try:
             flow.fetch_token(code=code)
         except Exception as e:
