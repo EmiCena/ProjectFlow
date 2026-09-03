@@ -17,8 +17,8 @@ const COLS = [
 ]
 
 function TrelloCard({ task, onClick }:any) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.8 : 1 }
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(task.id), data: { task } })
+  const style = { transform: transform ? CSS.Transform.toString(transform) : undefined, transition, opacity: isDragging ? 0.8 : 1 }
   const pct = task.estimated_hours > 0 ? Math.min(100, Math.round((Number(task.actual_hours)/Number(task.estimated_hours))*100)) : 0
   const priorityColor = task.priority==='urgent' ? 'bg-red-500' : task.priority==='high' ? 'bg-orange-500' : task.priority==='medium' ? 'bg-yellow-500' : 'bg-green-500'
   return (
@@ -37,8 +37,8 @@ function TrelloCard({ task, onClick }:any) {
 }
 
 function TrelloList({ id, label, tasks, onAdd, onTaskClick }:any) {
-  const { setNodeRef, isOver } = useDroppable({ id })
-  const sortableIds = tasks.map((t:any)=>t.id)
+  const { setNodeRef, isOver } = useDroppable({ id: String(id) })
+  const sortableIds = tasks.map((t:any)=>String(t.id))
   const est = tasks.reduce((s:any,t:any)=>s+Number(t.estimated_hours||0),0)
   return (
     <div ref={setNodeRef} className={`bg-[#ebecf0] rounded-[3px] w-[272px] shrink-0 flex flex-col max-h-full ${isOver ? 'bg-[#dfe1e6]' : ''}`}>
@@ -93,14 +93,40 @@ export default function Board() {
   const grouped = useMemo(()=>{ const g:any = {}; COLS.forEach(c=>g[c.id]=[]); tasks.forEach((t:any)=> (g[t.status] ??= []).push(t)); return g }, [tasks])
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over) return
-    const activeTask = tasks.find((t:any)=> String(t.id)===String(active.id))
-    if (!activeTask) return
-    let newStatus = null
-    if (COLS.some(c=>c.id===String(over.id))) newStatus = String(over.id)
-    else { const overTask = tasks.find((t:any)=> String(t.id)===String(over.id)); if (overTask) newStatus = overTask.status }
-    if (newStatus && newStatus!==activeTask.status) move.mutate({ taskId: activeTask.id, status: newStatus, position: 0 })
+    try {
+      const { active, over } = event
+      if (!over || !active) return
+      const activeId = String(active.id)
+      const overId = String(over.id)
+      const activeTask = tasks.find((t:any)=> String(t.id)===activeId)
+      if (!activeTask) return
+      let newStatus: string | null = null
+      let newPosition = 0
+      if (COLS.some(c=>c.id===overId)) {
+        newStatus = overId
+        // drop on empty column or column header → append to end
+        const colTasks = grouped[newStatus] || []
+        newPosition = colTasks.length
+      } else {
+        const overTask = tasks.find((t:any)=> String(t.id)===overId)
+        if (overTask) {
+          newStatus = overTask.status
+          const colTasks = grouped[newStatus] || []
+          const overIndex = colTasks.findIndex((t:any)=> String(t.id)===overId)
+          newPosition = overIndex >= 0 ? overIndex : colTasks.length
+          // if dragging within same column, adjust for removal
+          if (activeTask.status === newStatus) {
+            const activeIndex = colTasks.findIndex((t:any)=> String(t.id)===activeId)
+            if (activeIndex >= 0 && activeIndex < overIndex) newPosition = Math.max(0, newPosition - 0)
+          }
+        }
+      }
+      if (newStatus && (newStatus!==activeTask.status || newPosition !== activeTask.position)) {
+        move.mutate({ taskId: activeTask.id, status: newStatus, position: newPosition })
+      }
+    } catch (e) {
+      console.error("[Board] handleDragEnd error", e)
+    }
   }
   const handleAdd = (col:string) => {
     setAddCol(col)
