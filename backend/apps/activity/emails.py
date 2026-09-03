@@ -21,15 +21,25 @@ def send_notification_email(to_email, subject, body, html_body=None):
         return False
 
 def _send_async(to_email, subject, body, html_body=None):
-    # Prefer celery if broker available, else sync
-    try:
-        if settings.CELERY_BROKER_URL and "redis" in settings.CELERY_BROKER_URL.lower():
-            # try async, fallback to sync on failure
+    # Critical emails (verify/reset) must be sync to guarantee delivery on Render where celery worker may not exist.
+    # Try celery async but always fallback to sync if no worker / error.
+    use_celery = bool(settings.CELERY_BROKER_URL and "redis" in settings.CELERY_BROKER_URL.lower())
+    # For verification/reset we force sync (caller should use send_notification_email directly)
+    # Generic path: try async, if fails log and sync
+    if use_celery:
+        try:
             send_notification_email.delay(to_email, subject, body, html_body)
+            # also show token in logs when DEBUG for local testing without email
+            if settings.DEBUG:
+                print(f"[EMAIL QUEUED CELERY] To: {to_email} | Subject: {subject}")
             return
-    except Exception:
-        pass
-    send_notification_email(to_email, subject, body, html_body)
+        except Exception as e:
+            print(f"[EMAIL CELERY FAILED, FALLBACK SYNC] {e}")
+    # sync fallback (guaranteed)
+    result = send_notification_email(to_email, subject, body, html_body)
+    if not result and settings.DEBUG:
+        print(f"[EMAIL SYNC FAILED] To: {to_email} Subject: {subject}")
+    return result
 
 def send_verification_email(user, token):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -48,7 +58,10 @@ def send_verification_email(user, token):
       <p style="font-size: 12px; color: #9ca3af;">Expira en 24 horas. Si no creaste esta cuenta, ignora este mensaje.</p>
     </div>
     """
-    _send_async(user.email, subject, body, html)
+    # Use sync for critical verification emails (Render has no celery worker)
+    if settings.DEBUG:
+        print(f"[DEBUG VERIFY TOKEN] user={user.username} email={user.email} token={token} url={verify_url}")
+    send_notification_email(user.email, subject, body, html)
 
 def send_password_reset_email(user, token):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -67,7 +80,9 @@ def send_password_reset_email(user, token):
       <p style="font-size: 12px; color: #9ca3af;">Expira en 1 hora. Si no solicitaste esto, ignora el mensaje y tu contraseña seguirá igual.</p>
     </div>
     """
-    _send_async(user.email, subject, body, html)
+    if settings.DEBUG:
+        print(f"[DEBUG RESET TOKEN] user={user.username} email={user.email} token={token} url={reset_url}")
+    send_notification_email(user.email, subject, body, html)
 
 def send_username_reminder_email(user):
     frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -83,7 +98,9 @@ def send_username_reminder_email(user):
       <p style="font-size:12px; color:#9ca3af;"><a href="{frontend.rstrip('/')}/forgot-password">¿Olvidaste tu contraseña? Restablecer aquí</a></p>
     </div>
     """
-    _send_async(user.email, subject, body, html)
+    if settings.DEBUG:
+        print(f"[DEBUG USERNAME REMINDER] user={user.username} email={user.email}")
+    send_notification_email(user.email, subject, body, html)
 
 def notify_task_assigned(task, assignee_email):
     subject = f"Task assigned: {task.title}"

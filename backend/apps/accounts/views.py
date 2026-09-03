@@ -80,8 +80,11 @@ class ResendVerificationView(APIView):
             return Response({"detail": "Email ya verificado."}, status=400)
         try:
             from apps.activity.emails import send_verification_email
+            from django.conf import settings
             token = generate_verification_token(user)
             send_verification_email(user, token)
+            if settings.DEBUG:
+                return Response({"detail": "Si el email existe, se ha reenviado el enlace.", "debug_token": token, "debug_url": f"{settings.FRONTEND_URL}/verify-email?token={token}"})
         except Exception as e:
             print(f"[Resend] failed: {e}")
         return Response({"detail": "Si el email existe, se ha reenviado el enlace."})
@@ -100,8 +103,12 @@ class ForgotPasswordView(APIView):
             return Response({"detail": "Si el email existe, se ha enviado el enlace de recuperación."})
         try:
             from apps.activity.emails import send_password_reset_email
+            from django.conf import settings
             token = generate_reset_token(user)
             send_password_reset_email(user, token)
+            # In DEBUG, return token for testing without email
+            if settings.DEBUG:
+                return Response({"detail": "Si el email existe, se ha enviado el enlace de recuperación.", "debug_token": token, "debug_url": f"{settings.FRONTEND_URL}/reset-password?token={token}"})
         except Exception as e:
             print(f"[ForgotPassword] failed: {e}")
         return Response({"detail": "Si el email existe, se ha enviado el enlace de recuperación."})
@@ -149,7 +156,10 @@ class ForgotUsernameView(APIView):
             return Response({"detail": "Si el email existe, se ha enviado tu usuario."})
         try:
             from apps.activity.emails import send_username_reminder_email
+            from django.conf import settings
             send_username_reminder_email(user)
+            if settings.DEBUG:
+                return Response({"detail": "Si el email existe, se ha enviado tu usuario.", "debug_username": user.username})
         except Exception as e:
             print(f"[ForgotUsername] failed: {e}")
         return Response({"detail": "Si el email existe, se ha enviado tu usuario."})

@@ -8,14 +8,16 @@ export default function ForgotUsername() {
   const [msg, setMsg] = useState("")
   const [err, setErr] = useState("")
   const [loading, setLoading] = useState(false)
+  const [debugUser, setDebugUser] = useState("")
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setMsg(""); setErr("")
+    setMsg(""); setErr(""); setDebugUser("")
     setLoading(true)
     try {
       const { data } = await api.post("/auth/forgot-username/", { email: email.trim() })
       setMsg(data.detail)
+      if (data.debug_username) setDebugUser(data.debug_username)
     } catch (e:any) {
       setErr(e.response?.data?.detail || e.message)
     }
@@ -28,6 +30,7 @@ export default function ForgotUsername() {
         <h1 className="text-2xl font-bold">Recuperar usuario</h1>
         <p className="text-sm text-muted-foreground">Ingresa tu email y te enviaremos tu nombre de usuario.</p>
         {msg && <div className="bg-green-50 text-green-700 p-2 rounded text-sm border border-green-200">{msg}</div>}
+        {debugUser && <div className="bg-amber-50 text-amber-800 p-2 rounded text-sm border border-amber-200">DEBUG: tu usuario es <b>{debugUser}</b></div>}
         {err && <div className="bg-red-50 text-red-600 p-2 rounded text-sm border border-red-200">{err}</div>}
         <input className="w-full border border-border rounded px-3 py-2 bg-background" placeholder="tu@email.com" type="email" required value={email} onChange={e=>setEmail(e.target.value)} />
         <Button type="submit" className="w-full" disabled={loading || !email.trim()}>{loading ? "Enviando..." : "Enviar usuario"}</Button>

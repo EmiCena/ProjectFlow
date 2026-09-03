@@ -38,7 +38,11 @@ export default function VerifyEmail() {
     setResending(true)
     try {
       const { data } = await api.post("/auth/resend-verification/", { email: resendEmail.trim() })
-      setMsg(data.detail)
+      setMsg(data.detail + (data.debug_url ? ` DEBUG: ${data.debug_url}` : ""))
+      if (data.debug_url) {
+        // show token url directly for testing without Gmail
+        setMsg(prev => prev + `\nDEBUG URL: ${data.debug_url}`)
+      }
       setStatus("success")
     } catch (e:any) {
       setMsg(e.response?.data?.detail || e.message)

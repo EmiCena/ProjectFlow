@@ -54,7 +54,45 @@ services:
         sync: false # https://your-frontend.onrender.com
       - key: FRONTEND_URL
         sync: false # https://projectflow-web-4ccs.onrender.com
+      - key: EMAIL_HOST
+        value: smtp.sendgrid.net
+      - key: EMAIL_PORT
+        value: 587
     # ENTRYPOINT in backend/Dockerfile handles migrate + gunicorn, no dockerCommand needed
+
+  - type: worker
+    name: projectflow-celery
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A config worker -l info
+    plan: free
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: False
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projectflow-pg
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: projectflow-redis
+          type: redis
+          property: connectionString
+      - key: MONGO_URI
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: emicenanegocios@gmail.com
+      - key: FRONTEND_URL
+        sync: false
+      - key: EMAIL_HOST
+        value: smtp.sendgrid.net
+      - key: EMAIL_PORT
+        value: 587
 
   - type: web
     name: projectflow-web
