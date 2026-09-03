@@ -20,6 +20,7 @@ import TaskDetail from "./features/tasks/TaskDetail"
 import Team from "./features/team/Team"
 import Notifications from "./features/notifications/Notifications"
 import Settings from "./features/settings/Settings"
+import ThemeSettings from "./features/settings/ThemeSettings"
 import ClientPortal from "./features/portal/ClientPortal"
 import Calendar from "./features/calendar/Calendar"
 import TrelloClone from "./features/trello/TrelloClone"
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="team" element={<Team />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="settings/theme" element={<ThemeSettings />} />
         <Route path="documents" element={<Documents />} />
         <Route path="billing/subscribe" element={<Subscribe />} />
         <Route path="settings/2fa" element={<TwoFactor />} />
