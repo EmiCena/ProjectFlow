@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 export default function Documents() {
   const qc = useQueryClient()
@@ -9,6 +10,7 @@ export default function Documents() {
   const list = data?.results ?? data ?? []
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState("")
+  const [confirmId, setConfirmId] = useState<number | null>(null)
 
   const openDoc = async (doc:any) => {
     try {
@@ -43,7 +45,8 @@ export default function Documents() {
   })
   const delDoc = useMutation({
     mutationFn: async (id:number) => (await api.delete(`/documents/${id}/`)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["documents"] })
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["documents"] }); setConfirmId(null); toast.success("Documento borrado") },
+    onError: (e:any) => toast.error(e.response?.data?.detail || e.message)
   })
 
   return (
@@ -62,9 +65,17 @@ export default function Documents() {
         {list.map((d:any)=>(
           <div key={d.id} className="bg-card dark:bg-slate-900 p-3 rounded-lg shadow border flex justify-between items-center">
             <div><div className="font-medium text-sm">{d.title}</div><div className="text-xs text-muted-foreground">{d.username} · {(d.file_size/1024).toFixed(1)} KB</div></div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button onClick={()=>openDoc(d)} className="text-indigo-600 dark:text-indigo-400 text-sm underline">Open</button>
-              <button onClick={()=>{ if(confirm(`Borrar ${d.title}?`)) delDoc.mutate(d.id) }} className="text-red-600 dark:text-red-400 text-sm underline">Borrar</button>
+              {confirmId === d.id ? (
+                <span className="flex gap-1 items-center">
+                  <span className="text-xs">¿Borrar?</span>
+                  <button onClick={()=>delDoc.mutate(d.id)} className="text-white bg-red-600 px-2 py-0.5 rounded text-xs">Sí</button>
+                  <button onClick={()=>setConfirmId(null)} className="text-xs border px-2 py-0.5 rounded">No</button>
+                </span>
+              ) : (
+                <button onClick={()=>setConfirmId(d.id)} className="text-red-600 dark:text-red-400 text-sm underline">Borrar</button>
+              )}
             </div>
           </div>
         ))}

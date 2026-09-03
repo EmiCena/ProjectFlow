@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 export default function Subscribe() {
   const [loading, setLoading] = useState(false)
@@ -12,7 +13,7 @@ export default function Subscribe() {
         cancel_url: window.location.origin + "/invoices"
       })
       if (data.url) window.location.href = data.url
-    } catch(e:any){ alert(e.response?.data?.detail || e.message) }
+    } catch(e:any){ toast.error(e.response?.data?.detail || e.message) }
     setLoading(false)
   }
   return (

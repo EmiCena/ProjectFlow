@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 export default function Planner() {
   const { t } = useTranslation()
@@ -27,7 +28,7 @@ export default function Planner() {
         setCooldown(sec)
         const id = setInterval(() => setCooldown(s => { if (s <= 1) clearInterval(id); return s - 1 }), 1000)
       } else {
-        alert(e.response?.data?.detail || e.message)
+        toast.error(e.response?.data?.detail || e.message)
       }
     }
     setLoading(false)
@@ -40,7 +41,7 @@ export default function Planner() {
       setResult(data)
       qc.invalidateQueries({queryKey:["projects"]})
       qc.invalidateQueries({queryKey:["tasks"]})
-    } catch(e:any){ alert(JSON.stringify(e.response?.data)) }
+    } catch(e:any){ toast.error(e.response?.data?.detail || JSON.stringify(e.response?.data) || e.message) }
     setCreating(false)
   }
 

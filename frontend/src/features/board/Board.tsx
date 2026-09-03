@@ -78,6 +78,9 @@ export default function Board() {
   const qc = useQueryClient()
   const [selected, setSelected] = useState<any>(null)
   const [comment, setComment] = useState("")
+  const [showAdd, setShowAdd] = useState(false)
+  const [addCol, setAddCol] = useState<string>("todo")
+  const [addForm, setAddForm] = useState({ title: "", description: "", priority: "medium", estimated_hours: 8 })
 
   const { data: tasksData } = useQuery({ queryKey:["tasks", id], queryFn: async () => (await api.get(`/tasks/?project=${id}`)).data })
   const tasks = useMemo(()=> tasksData?.results ?? tasksData ?? [], [tasksData])
@@ -100,9 +103,14 @@ export default function Board() {
     if (newStatus && newStatus!==activeTask.status) move.mutate({ taskId: activeTask.id, status: newStatus, position: 0 })
   }
   const handleAdd = (col:string) => {
-    const title = prompt(`New card title for ${col}?`)
-    if (!title) return
-    create.mutate({ project: Number(id), title, status: col, priority:"medium", estimated_hours: 8 })
+    setAddCol(col)
+    setAddForm({ title: "", description: "", priority: "medium", estimated_hours: 8 })
+    setShowAdd(true)
+  }
+  const submitAdd = () => {
+    if (!addForm.title.trim()) return
+    create.mutate({ project: Number(id), title: addForm.title.trim(), description: addForm.description, status: addCol, priority: addForm.priority, estimated_hours: Number(addForm.estimated_hours) || 8 })
+    setShowAdd(false)
   }
 
   return (
@@ -124,12 +132,29 @@ export default function Board() {
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="flex gap-3 h-full items-start">
             {COLS.map(col=> <TrelloList key={col.id} id={col.id} label={col.label} tasks={grouped[col.id]||[]} onAdd={()=>handleAdd(col.id)} onTaskClick={setSelected} />)}
-            <div className="w-[272px] shrink-0">
-              <button className="w-full text-left bg-white/20 hover:bg-white/30 text-white rounded-[3px] px-3 py-2.5 text-sm font-medium">+ Add another list</button>
-            </div>
           </div>
         </DndContext>
       </div>
+      {/* Add card modal */}
+      {showAdd && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={()=>setShowAdd(false)}>
+          <div className="bg-card rounded-lg w-full max-w-md p-4 space-y-3" onClick={e=>e.stopPropagation()}>
+            <h3 className="font-semibold">Add card to {addCol}</h3>
+            <input placeholder="Title *" value={addForm.title} onChange={e=>setAddForm({...addForm, title:e.target.value})} className="w-full border border-border rounded px-3 py-2 text-sm bg-background" />
+            <textarea placeholder="Description" value={addForm.description} onChange={e=>setAddForm({...addForm, description:e.target.value})} rows={2} className="w-full border border-border rounded px-3 py-2 text-sm bg-background" />
+            <div className="flex gap-2">
+              <select value={addForm.priority} onChange={e=>setAddForm({...addForm, priority:e.target.value})} className="flex-1 border border-border rounded px-2 py-2 text-sm bg-background">
+                <option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="urgent">urgent</option>
+              </select>
+              <input type="number" min={1} max={100} value={addForm.estimated_hours} onChange={e=>setAddForm({...addForm, estimated_hours:Number(e.target.value)})} className="w-24 border border-border rounded px-2 py-2 text-sm bg-background" placeholder="Hours" />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={()=>setShowAdd(false)}>Cancel</Button>
+              <Button onClick={submitAdd} disabled={!addForm.title.trim()}>Create</Button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Card modal - Trello style */}
       {selected && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center p-4 md:p-8 z-50 overflow-auto" onClick={()=>setSelected(null)}>
@@ -167,11 +192,8 @@ export default function Board() {
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-[#5e6c84] uppercase">Add to card</p>
-                <button className="w-full text-left bg-[#091e420a] hover:bg-[#091e4214] text-[#172b4d] rounded-[3px] px-3 py-1.5 text-sm">Members</button>
-                <button className="w-full text-left bg-[#091e420a] hover:bg-[#091e4214] text-[#172b4d] rounded-[3px] px-3 py-1.5 text-sm">Labels</button>
-                <button className="w-full text-left bg-[#091e420a] hover:bg-[#091e4214] text-[#172b4d] rounded-[3px] px-3 py-1.5 text-sm">Checklist</button>
-                <button className="w-full text-left bg-[#091e420a] hover:bg-[#091e4214] text-[#172b4d] rounded-[3px] px-3 py-1.5 text-sm">Attachment</button>
+                <p className="text-xs font-semibold text-[#5e6c84] uppercase">Details</p>
+                <p className="text-xs text-[#5e6c84]">Priority, hours and comments are available on this card. More actions coming soon.</p>
               </div>
             </div>
           </div>
