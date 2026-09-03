@@ -8,7 +8,25 @@ import "./lib/i18n"
 import "./store/theme"
 import { Toaster } from "sonner"
 
-const qc = new QueryClient()
+// Global handler for the rogue startTime error (vendor scheduler) to avoid blank screen
+window.addEventListener("error", (e) => {
+  if (String(e.message).includes("startTime") && String(e.filename).includes("2:")) {
+    console.warn("[Suppressed startTime error]", e.message)
+    e.preventDefault()
+  }
+})
+window.addEventListener("unhandledrejection", (e) => {
+  if (String(e.reason?.message || e.reason).includes("startTime")) {
+    console.warn("[Suppressed promise startTime]", e.reason)
+    e.preventDefault()
+  }
+})
+
+const qc = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 1, refetchOnWindowFocus: false },
+  },
+})
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={qc}>

@@ -32,7 +32,7 @@ export default function Dashboard() {
         <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
           <h3 className="font-semibold mb-2">Revenue</h3>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.monthly_revenue}>
+            <BarChart data={Array.isArray(data.monthly_revenue) ? data.monthly_revenue : []}>
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
@@ -44,8 +44,8 @@ export default function Dashboard() {
           <h3 className="font-semibold mb-2">Status Distribution</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={data.status_distribution} dataKey="count" nameKey="status" outerRadius={80} label>
-                {data.status_distribution.map((_:any,i:number)=><Cell key={i} fill={COLORS[i%COLORS.length]} />)}
+              <Pie data={Array.isArray(data.status_distribution) ? data.status_distribution : []} dataKey="count" nameKey="status" outerRadius={80} label>
+                {(Array.isArray(data.status_distribution) ? data.status_distribution : []).map((_:any,i:number)=><Cell key={i} fill={COLORS[i%COLORS.length]} />)}
               </Pie>
               <Tooltip />
             </PieChart>
@@ -56,8 +56,8 @@ export default function Dashboard() {
         <div className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border">
           <h3 className="font-semibold mb-2">Upcoming Deadlines</h3>
           <ul className="divide-y divide-border">
-            {data.upcoming_deadlines.map((u:any)=><li key={u.id} className="py-2 flex justify-between border-border"><span>{u.title}</span><span className="text-sm text-muted-foreground dark:text-slate-400">{u.due_date} · {u.status}</span></li>)}
-            {data.upcoming_deadlines.length===0 && <li className="py-2 text-sm text-muted-foreground dark:text-slate-400">No upcoming tasks</li>}
+            {(Array.isArray(data.upcoming_deadlines) ? data.upcoming_deadlines : []).map((u:any)=><li key={u.id} className="py-2 flex justify-between border-border"><span>{u.title}</span><span className="text-sm text-muted-foreground dark:text-slate-400">{u.due_date} · {u.status}</span></li>)}
+            {(!Array.isArray(data.upcoming_deadlines) || data.upcoming_deadlines.length===0) && <li className="py-2 text-sm text-muted-foreground dark:text-slate-400">No upcoming tasks</li>}
           </ul>
         </div>
         <ActivityFeed />
