@@ -68,6 +68,7 @@ class ResendVerificationView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AuthAnonThrottle]
     def post(self, request):
+        print(f"[RESEND-VERIFY] email={request.data.get('email')} ip={request.META.get('REMOTE_ADDR')}")
         email = request.data.get("email", "").strip()
         if not email:
             return Response({"detail": "Email requerido."}, status=400)
@@ -75,6 +76,7 @@ class ResendVerificationView(APIView):
             user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
             # do not reveal existence
+            print(f"[RESEND-VERIFY] not found {email}")
             return Response({"detail": "Si el email existe, se ha reenviado el enlace."})
         if user.is_email_verified:
             return Response({"detail": "Email ya verificado."}, status=400)
@@ -93,12 +95,16 @@ class ForgotPasswordView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AuthAnonThrottle]
     def post(self, request):
+        print(f"[FORGOT-PASSWORD] request email={request.data.get('email')} ip={request.META.get('REMOTE_ADDR')} url={request.path}")
         email = request.data.get("email", "").strip()
         if not email:
+            print("[FORGOT-PASSWORD] missing email")
             return Response({"detail": "Email requerido."}, status=400)
         try:
             user = User.objects.get(email__iexact=email)
+            print(f"[FORGOT-PASSWORD] found user id={user.id} username={user.username}")
         except User.DoesNotExist:
+            print(f"[FORGOT-PASSWORD] user not found for {email}")
             # do not reveal
             return Response({"detail": "Si el email existe, se ha enviado el enlace de recuperación."})
         try:
@@ -147,12 +153,15 @@ class ForgotUsernameView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AuthAnonThrottle]
     def post(self, request):
+        print(f"[FORGOT-USERNAME] request email={request.data.get('email')} ip={request.META.get('REMOTE_ADDR')}")
         email = request.data.get("email", "").strip()
         if not email:
             return Response({"detail": "Email requerido."}, status=400)
         try:
             user = User.objects.get(email__iexact=email)
+            print(f"[FORGOT-USERNAME] found user {user.username}")
         except User.DoesNotExist:
+            print(f"[FORGOT-USERNAME] not found {email}")
             return Response({"detail": "Si el email existe, se ha enviado tu usuario."})
         try:
             from apps.activity.emails import send_username_reminder_email

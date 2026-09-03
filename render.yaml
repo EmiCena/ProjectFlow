@@ -101,7 +101,7 @@ services:
     staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_URL
-        sync: false # https://projectflow-api.onrender.com/api
+        value: https://projectflow-api-1qj3.onrender.com/api
     routes:
       - type: rewrite
         source: /*

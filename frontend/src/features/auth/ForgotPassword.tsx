@@ -14,13 +14,20 @@ export default function ForgotPassword() {
     e.preventDefault()
     setMsg(""); setErr(""); setDebugUrl("")
     setLoading(true)
+    console.log("[FORGOT] API:", api.defaults.baseURL, "email:", email.trim())
     try {
       const { data } = await api.post("/auth/forgot-password/", { email: email.trim() })
       setMsg(data.detail)
       if (data.debug_url) setDebugUrl(data.debug_url)
       if (data.debug_token) setDebugUrl(data.debug_url || `Token: ${data.debug_token}`)
     } catch (e:any) {
-      setErr(e.response?.data?.detail || e.message)
+      console.error("[FORGOT] error", e)
+      const detail = e.response?.data?.detail || e.response?.data?.email?.[0] || e.message
+      const status = e.response?.status ? ` (HTTP ${e.response.status})` : ""
+      const base = api.defaults.baseURL || "unknown"
+      setErr(`${detail}${status} — API: ${base}`)
+      // muestra en consola para debug Render
+      console.error("Forgot failed baseURL:", base, "response:", e.response?.data)
     }
     setLoading(false)
   }
@@ -35,6 +42,7 @@ export default function ForgotPassword() {
         {err && <div className="bg-red-50 text-red-600 p-2 rounded text-sm border border-red-200">{err}</div>}
         <input className="w-full border border-border rounded px-3 py-2 bg-background" placeholder="tu@email.com" type="email" required value={email} onChange={e=>setEmail(e.target.value)} />
         <Button type="submit" className="w-full" disabled={loading || !email.trim()}>{loading ? "Enviando..." : "Enviar enlace"}</Button>
+        <p className="text-[11px] text-muted-foreground text-center">API: {api.defaults.baseURL as string}</p>
         <div className="flex justify-between text-xs text-muted-foreground">
           <Link to="/forgot-username" className="text-primary hover:underline">¿Olvidaste tu usuario?</Link>
           <Link to="/login" className="text-primary hover:underline">Volver a login</Link>
