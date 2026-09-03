@@ -19,11 +19,35 @@ function timeAgo(iso: string) {
 
 function eventColor(event: string) {
   if (event.includes("task")) return "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-  if (event.includes("invoice")) return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 border-emerald-200"
-  if (event.includes("project")) return "bg-amber-50 text-amber-700 dark:bg-amber-900/20"
-  if (event.includes("client")) return "bg-sky-50 text-sky-700 dark:bg-sky-900/20"
-  if (event.includes("time")) return "bg-purple-50 text-purple-700 dark:bg-purple-900/20"
-  return "bg-slate-100 dark:bg-slate-800"
+  if (event.includes("invoice")) return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+  if (event.includes("project")) return "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 border-amber-200"
+  if (event.includes("client")) return "bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300 border-sky-200"
+  if (event.includes("time")) return "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 border-purple-200"
+  return "bg-slate-100 dark:bg-slate-800 border-border"
+}
+function statusColor(s: string) {
+  const m: Record<string,string> = {
+    backlog: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200",
+    todo: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border-sky-200",
+    in_progress: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200",
+    review: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200",
+    done: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200",
+    draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200",
+    sent: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border-sky-200",
+    paid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200",
+  }
+  return m[s] || "bg-muted text-muted-foreground border-border"
+}
+function eventIcon(event: string) {
+  if (event === "task_created") return "➕"
+  if (event === "task_status_changed") return "🔄"
+  if (event === "time_logged") return "⏱️"
+  if (event.includes("invoice")) return event.includes("paid") ? "✅" : "💰"
+  if (event.includes("project")) return "📁"
+  return "🔔"
+}
+function prettyEvent(event: string) {
+  return event.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
 }
 
 export default function Notifications() {
@@ -58,23 +82,63 @@ export default function Notifications() {
         </div>
       ) : (
         <div className="space-y-3">
-          {list.map((a: any) => (
-            <div key={a._id ?? a.id ?? `${a.event}-${a.created_at}`} className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border flex gap-3">
-              <div className={`h-fit px-2 py-1 rounded text-xs font-medium border ${eventColor(a.event)}`}>{a.event}</div>
+          {list.map((a: any) => {
+            const md = a.metadata || {}
+            return (
+            <div key={a._id ?? a.id ?? `${a.event}-${a.created_at}`} className="bg-card dark:bg-slate-900 p-4 rounded-lg shadow border border-border flex gap-3 hover:shadow-md transition-shadow">
+              <div className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm border ${eventColor(a.event)}`}>{eventIcon(a.event)}</div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm">
-                  <span className="font-medium">{a.event}</span>
-                  {a.entity && <span className="text-muted-foreground"> · {a.entity} #{a.entity_id}</span>}
-                  {a.user_id && <span className="text-xs text-muted-foreground ml-2">by user #{a.user_id}</span>}
-                </p>
-                {a.metadata && Object.keys(a.metadata).length > 0 && (
-                  <pre className="text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded mt-2 overflow-auto border border-border">{JSON.stringify(a.metadata, null, 2)}</pre>
-                )}
-                {a.entity === "task" && a.entity_id && <Link to={`/tasks/${a.entity_id}`} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1 inline-block">View task →</Link>}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${eventColor(a.event)}`}>{prettyEvent(a.event)}</span>
+                  {a.entity && <span className="text-xs text-muted-foreground">· {a.entity} #{a.entity_id}</span>}
+                  <span className="text-xs text-muted-foreground ml-auto">{timeAgo(a.created_at)}</span>
+                </div>
+
+                {/* Visual metadata */}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {a.event === "task_status_changed" && md.old_status && md.new_status ? (
+                    <>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColor(md.old_status)}`}>{md.old_status}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColor(md.new_status)}`}>{md.new_status}</span>
+                    </>
+                  ) : a.event === "task_created" ? (
+                    <>
+                      {md.title && <span className="px-2 py-1 rounded-full text-xs bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">📝 {md.title}</span>}
+                      {md.project_id && <span className="px-2 py-1 rounded-full text-xs bg-muted border border-border">📁 Project #{md.project_id}</span>}
+                    </>
+                  ) : a.event === "time_logged" ? (
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300">⏱️ +{md.hours}h</span>
+                  ) : a.event.includes("invoice") ? (
+                    <>
+                      {md.old_status && md.new_status ? (
+                        <>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColor(md.old_status)}`}>{md.old_status}</span>
+                          <span className="text-muted-foreground">→</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColor(md.new_status)}`}>{md.new_status}</span>
+                        </>
+                      ) : md.total ? (
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/20 border border-emerald-200 text-emerald-700 dark:text-emerald-300">💰 ${md.total}</span>
+                      ) : null}
+                      {md.title && <span className="text-xs text-muted-foreground">Invoice #{a.entity_id}</span>}
+                    </>
+                  ) : Object.keys(md).length > 0 ? (
+                    Object.entries(md).map(([k,v]) => (
+                      <span key={k} className="px-2 py-1 rounded-full text-xs bg-muted border border-border"><span className="text-muted-foreground">{k}:</span> <b>{String(v)}</b></span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Sin detalles</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 mt-2">
+                  {a.user_id && <span className="text-xs text-muted-foreground">by user #{a.user_id}</span>}
+                  {a.entity === "task" && a.entity_id && <Link to={`/tasks/${a.entity_id}`} className="text-xs text-primary hover:underline font-medium">View task →</Link>}
+                  {a.entity === "invoice" && a.entity_id && <Link to={`/invoices/${a.entity_id}`} className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium">View invoice →</Link>}
+                </div>
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{timeAgo(a.created_at)}</span>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>

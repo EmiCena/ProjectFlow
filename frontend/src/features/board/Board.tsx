@@ -106,13 +106,13 @@ export default function Board() {
       if (COLS.some(c=>c.id===overId)) {
         newStatus = overId
         // drop on empty column or column header → append to end
-        const colTasks = grouped[newStatus] || []
+        const colTasks = grouped[newStatus as string] || []
         newPosition = colTasks.length
       } else {
         const overTask = tasks.find((t:any)=> String(t.id)===overId)
         if (overTask) {
           newStatus = overTask.status
-          const colTasks = grouped[newStatus] || []
+          const colTasks = grouped[newStatus as string] || []
           const overIndex = colTasks.findIndex((t:any)=> String(t.id)===overId)
           newPosition = overIndex >= 0 ? overIndex : colTasks.length
           // if dragging within same column, adjust for removal
