@@ -131,30 +131,36 @@ def notify_task_assigned(task, assignee_email):
     subject = f"Task assigned: {task.title}"
     body = f"You have been assigned to task '{task.title}' in project '{task.project.title}'.\n\nProject: {task.project.title}\nTask: {task.title}\nPriority: {task.priority}\n\nView: {getattr(settings,'FRONTEND_URL','')}/projects/{task.project_id}/board"
     html = f"<p>Te asignaron la tarea <b>{task.title}</b> en el proyecto <b>{task.project.title}</b> (prioridad {task.priority}).</p><p><a href='{getattr(settings,'FRONTEND_URL','')}/projects/{task.project_id}/board'>Ver tablero</a></p>"
-    _send_async(assignee_email, subject, body, html)
+    print(f"[EMAIL DIRECT] Task assigned To: {assignee_email}")
+    send_notification_email(assignee_email, subject, body, html)
 
 def notify_invoice_sent(invoice, client_email):
     subject = f"Invoice {invoice.number} sent - ${invoice.total}"
     body = f"Invoice {invoice.number} for ${invoice.total} has been sent.\n\nClient: {invoice.client.company_name}\nTotal: ${invoice.total}\nDue: {invoice.due_date or 'N/A'}\n\nView: {getattr(settings,'FRONTEND_URL','')}/invoices/{invoice.id}"
     html = f"<p>Factura <b>{invoice.number}</b> por <b>${invoice.total}</b> enviada a {invoice.client.company_name}.</p><p><a href='{getattr(settings,'FRONTEND_URL','')}/invoices/{invoice.id}'>Ver factura</a></p>"
-    _send_async(client_email, subject, body, html)
+    print(f"[EMAIL DIRECT] Invoice sent To: {client_email}")
+    send_notification_email(client_email, subject, body, html)
 
 def notify_invoice_paid(invoice, client_email):
     subject = f"Invoice {invoice.number} paid - gracias!"
     body = f"Invoice {invoice.number} ha sido marcada como pagada (${invoice.total}).\nClient: {invoice.client.company_name}"
-    _send_async(client_email, subject, body)
+    print(f"[EMAIL DIRECT] Invoice paid To: {client_email}")
+    send_notification_email(client_email, subject, body)
 
 def notify_task_status_changed(task, actor_username, recipient_email):
     subject = f"Task '{task.title}' moved to {task.status}"
     body = f"{actor_username} movió la tarea '{task.title}' a {task.status} en {task.project.title}."
-    _send_async(recipient_email, subject, body)
+    print(f"[EMAIL DIRECT] Task status To: {recipient_email}")
+    send_notification_email(recipient_email, subject, body)
 
 def notify_deadline_approaching(task, recipient_email, days_left=1):
     subject = f"Deadline en {days_left} día(s): {task.title}"
     body = f"La tarea '{task.title}' vence el {task.due_date} ({days_left} día(s)). Proyecto: {task.project.title}"
-    _send_async(recipient_email, subject, body)
+    print(f"[EMAIL DIRECT] Deadline To: {recipient_email}")
+    send_notification_email(recipient_email, subject, body)
 
 def notify_project_deadline(project, recipient_email):
     subject = f"Proyecto deadline próximo: {project.title}"
     body = f"El proyecto '{project.title}' vence el {project.deadline}."
-    _send_async(recipient_email, subject, body)
+    print(f"[EMAIL DIRECT] Project deadline To: {recipient_email}")
+    send_notification_email(recipient_email, subject, body)
