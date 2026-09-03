@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState, useMemo } from "react"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
-import { DndContext, closestCenter, DragEndEvent, useDroppable } from "@dnd-kit/core"
+import { DndContext, rectIntersection, DragEndEvent, useDroppable } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 
@@ -156,7 +156,7 @@ export default function Board() {
       </div>
       {/* Board canvas - horizontal scroll like Trello */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-3">
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext collisionDetection={rectIntersection} onDragEnd={handleDragEnd} onDragStart={() => {}}>
           <div className="flex gap-3 h-full items-start">
             {COLS.map(col=> <TrelloList key={col.id} id={col.id} label={col.label} tasks={grouped[col.id]||[]} onAdd={()=>handleAdd(col.id)} onTaskClick={setSelected} />)}
           </div>
